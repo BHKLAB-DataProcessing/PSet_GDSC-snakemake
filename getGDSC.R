@@ -789,7 +789,7 @@ function (#gene=TRUE,
   celline[ ,"cellid"] <- rownames(celline)
   
 
-  GDSC <- PharmacoSet(molecularProfiles=list("rna"=eset, "rna2"=gdsc.u219.ensg, "mutation"=MutationEset, "fusion"=fusion.eset)#, "cnv"=gdsc.eset),
+  GDSC <- PharmacoSet(molecularProfiles=list("rna"=eset, "rna2"=gdsc.u219.ensg, "mutation"=MutationEset, "fusion"=fusion.eset),#, "cnv"=gdsc.eset),
                       name="GDSC", 
                       cell=celline, 
                       drug=druginfo, 
