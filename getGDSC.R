@@ -637,7 +637,7 @@ function (#gene=TRUE,
 	 #  load(myfn, verbose=TRUE)
   # }
 
-  recomputed <- readRDS("/pfs/gdscProfiles/gdscProfiles.rds")
+  recomputed <- get(load("/pfs/gdscProfiles/gdscProfile.RData"))
 
   profiles <- cbind(profiles, recomputed[rownames(profiles)])    
 
