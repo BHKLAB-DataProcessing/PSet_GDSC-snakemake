@@ -786,11 +786,13 @@ function (#gene=TRUE,
   # tt <- apply(data, MARGIN = 1, function(x){table(is.na(x))["FALSE"]})
   # features <- setdiff(rownames(exprs(gdsc.eset)), names(tt)[which(is.na(tt))])
   # gdsc.eset <- gdsc.eset[features, ]
-
+  message("set cell row names")
   curationCell <- cell_all[which(!is.na(cell_all$CGP.cellid) | !is.na(cell_all$CGP_EMTAB3610.cellid) | !is.na(cell_all$GDSC.SNP.cellid)), c("unique.cellid", "CGP.cellid", "CGP_EMTAB3610.cellid", "GDSC.SNP.cellid")]
   rownames(curationCell) <- curationCell$unique.cellid
   colnames(curationCell) <- gsub("CGP", "GDSC", colnames(curationCell))
   
+  message("set tissue names")
+
   curationTissue <- cell_all[which(!is.na(cell_all$CGP.cellid) | !is.na(cell_all$CGP_EMTAB3610.cellid) | !is.na(cell_all$GDSC.SNP.cellid)), c("unique.tissueid", "CGP.cellid", "CGP_EMTAB3610.cellid", "GDSC.SNP.tissueid")]
   rownames(curationTissue) <- curationCell$unique.cellid
   colnames(curationTissue) <- gsub("CGP", "GDSC", colnames(curationTissue))
