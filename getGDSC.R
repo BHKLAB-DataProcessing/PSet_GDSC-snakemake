@@ -661,7 +661,7 @@ function (#gene=TRUE,
 	rownames(curationTissue) <- curationCell[, "unique.cellid"]
 
   message("set cell names")
-  print(curationCell[, "unique.cellid"])
+  print(curationCell[duplicated(curationCell[,"unique.cellid"]), "unique.cellid"])
 
 	rownames(curationCell) <- curationCell[, "unique.cellid"]
 
