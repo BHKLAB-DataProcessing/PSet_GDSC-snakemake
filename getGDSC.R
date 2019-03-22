@@ -4,6 +4,7 @@
 ## 
 #################################################
 library(PharmacoGxPrivate)
+options(error=traceback)
 getGDSC <- 
 function (#gene=TRUE, 
 			tmpdir=tempdir(),
@@ -673,6 +674,7 @@ function (#gene=TRUE,
 	mynames <- rownames(druginfo)[match(curationDrug[, "GDSC.drugid"],druginfo[, "drug.name"])]
   	
 	mynames[duplicated(mynames)] <- rownames(druginfo)[!rownames(druginfo) %in% mynames]
+  message("setting curationDrug rownames")
   rownames(curationDrug) <- mynames
   
   ##update esets pData 
@@ -682,6 +684,7 @@ function (#gene=TRUE,
 
   #integrate cell slot with all the extra new rna cells
   # celline[which(celline[, "cell_id"] == "KMS12-BM"), "cell_id"] <- "KMS-12-BM"
+  message("setting cellinfo rownames")
   rownames(celline) <- rownames(curationCell)[match(celline[, "cell_id"], curationCell[, "GDSC.cellid"])]
   celline <- cbind(celline, "GDSC_EMTAB3610.cellid"=curationCell[rownames(celline), "GDSC_EMTAB3610.cellid"])
   ##after cbind NA is replaced by emty strings!!!
@@ -689,6 +692,8 @@ function (#gene=TRUE,
   tt <- as.data.frame(matrix(NA, ncol=ncol(celline), nrow=length(which(!(rownames(curationCell) %in% rownames(celline))))), stringsAsFactors=FALSE)
   colnames(tt) <- colnames(celline)
   tt[, "GDSC_EMTAB3610.cellid"] <- curationCell[which(!(rownames(curationCell) %in% rownames(celline))), "GDSC_EMTAB3610.cellid"]
+  
+  message("setting rownames of tt")
   rownames(tt) <- rownames(curationCell)[match(tt[, "GDSC_EMTAB3610.cellid"], curationCell[, "GDSC_EMTAB3610.cellid"])]
 
   tt[, "cell_id"] <- tt[ , "GDSC_EMTAB3610.cellid"]
