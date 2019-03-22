@@ -3,7 +3,7 @@
 ##
 ## 
 #################################################
-
+library(PharmacoGxPrivate)
 getGDSC <- 
 function (#gene=TRUE, 
 			tmpdir=tempdir(),
@@ -39,14 +39,16 @@ function (#gene=TRUE,
   # downloadGDSCdrugs(path.data=path.data, path.drug=path.drug)
   
   # celline <- generateGDSCCell.lines(path.data=path.data, path.cell=path.cell, saveres=saveres)
-  celline <- get(load("/pfs/gdscCellInfo/celline.gdsc.RData"))
+  celline <- get(load("/Volumes/pfs/gdscCellInfo/celline.gdsc.RData"))
+  celline[celline[, "Sample.name"] == "NTERA-2_cl_D1", "Sample.name"] <- "NTERA-S-cl-D1"
+
   cosmic <- celline 
   
   ## profiles for the drugs
   message("Read drug sensitivity measurements")
-  # myfn2 <- file.path("/pfs/gdscDrugInfo", "gdsc_drug_sensitivity.RData")
+  # myfn2 <- file.path("/Volumes/pfs/gdscDrugInfo", "gdsc_drug_sensitivity.RData")
   # if(!file.exists(myfn2)) {
-  drugpheno <- read.csv(file.path("/pfs/gdscDrugInfo", "gdsc_drug_sensitivity.csv"))
+  drugpheno <- read.csv(file.path("/Volumes/pfs/gdscDrugInfo", "gdsc_drug_sensitivity.csv"))
   drugpheno[drugpheno == "" | drugpheno == " "] <- NA
     # save(list="drugpheno", compress=TRUE, file=myfn2)
   # } else { load(myfn2) }
@@ -69,7 +71,7 @@ function (#gene=TRUE,
   drugnid <- cbind("drug.name"=dn, "drug.id"=did)[!is.na(did) & !duplicated(did), ]
   rownames(drugnid) <- paste("drugid", drugnid[ , "drug.id"], sep="_")
   
-  
+  # drugpheno[drugpheno[ , "Cell.Line"] == "NTERA-S-cl-D1" , "Cell.Line"] <- "NTERA-2_cl_D1"
   if(any(!is.element(drugpheno[ , "Cell.Line"], celline[ , "Sample.name"]))) { stop("Some cell line names are not included in the COSMIC database") }
   celln <- drugpheno[ , "Cell.Line"]
   drugpheno <- data.frame("cellid"=celln, drugpheno)
@@ -95,25 +97,25 @@ function (#gene=TRUE,
   
   
   ### info about each experiment
-  message("Read sample information")
-  sampleinfo <- read.csv(file.path("/pfs/gdscU133a", "gdsc_ge_sampleinfo.txt"), sep="\t")
-  sampleinfo[sampleinfo == "" | sampleinfo == " "] <- NA
-  ## curate cell line names
-  sampleinfo[sampleinfo[ , "Source.Name"] == "MZ2-MEL.", "Source.Name"] <- "MZ2-MEL"
-  sampleinfo[sampleinfo[ , "Source.Name"] == "KMS-12-BM", "Source.Name"] <- "KMS12-BM"
-  iix <- which(!duplicated(sampleinfo[ , "Source.Name"]) & !is.element(sampleinfo[ , "Source.Name"], celline[ , "Sample.name"]))
-  if(length(iix) > 0) {
-    ## enrich the list of cell lines
-    tt <- matrix(NA, nrow=length(iix), ncol=ncol(celline), dimnames=list(sampleinfo[iix, "Source.Name"], colnames(celline)))
-    tt[ , "Sample.name"] <- sampleinfo[iix, "Source.Name"]
-    celline <- rbind(celline, tt)
-  }
-  fn <- gsub(patter="[.]CEL", replacement="", x=sampleinfo[ , "Array.Data.File"])
-  if(any(!is.element(fn[!is.na(fn)], names(celfns)))) { stop("some CEL files are missing for the GDSC project") }
-  rownames(sampleinfo) <- fn
-  sampleinfo <- sampleinfo[names(celfn), , drop=FALSE]
-  sampleinfo <- data.frame("samplename"=names(celfns), "filename"=celfns, "chiptype"=chipt, "hybridization.date"=chipd[ , "day"], "hybridization.hour"=chipd[ , "hour"], "file.day"=celfile.timestamp[ , "file.day"], "file.hour"=celfile.timestamp[ , "file.hour"], "batchid"=NA, "cellid"=sampleinfo[ , "Source.Name"], sampleinfo)
-  sampleinfo2 <- sampleinfo
+  # message("Read sample information")
+  # sampleinfo <- read.csv(file.path("/Volumes/pfs/gdscU133a", "gdsc_ge_sampleinfo.txt"), sep="\t")
+  # sampleinfo[sampleinfo == "" | sampleinfo == " "] <- NA
+  # ## curate cell line names
+  # sampleinfo[sampleinfo[ , "Source.Name"] == "MZ2-MEL.", "Source.Name"] <- "MZ2-MEL"
+  # sampleinfo[sampleinfo[ , "Source.Name"] == "KMS-12-BM", "Source.Name"] <- "KMS12-BM"
+  # iix <- which(!duplicated(sampleinfo[ , "Source.Name"]) & !is.element(sampleinfo[ , "Source.Name"], celline[ , "Sample.name"]))
+  # if(length(iix) > 0) {
+  #   ## enrich the list of cell lines
+  #   tt <- matrix(NA, nrow=length(iix), ncol=ncol(celline), dimnames=list(sampleinfo[iix, "Source.Name"], colnames(celline)))
+  #   tt[ , "Sample.name"] <- sampleinfo[iix, "Source.Name"]
+  #   celline <- rbind(celline, tt)
+  # }
+  # fn <- gsub(patter="[.]CEL", replacement="", x=sampleinfo[ , "Array.Data.File"])
+  # if(any(!is.element(fn[!is.na(fn)], names(celfns)))) { stop("some CEL files are missing for the GDSC project") }
+  # rownames(sampleinfo) <- fn
+  # sampleinfo <- sampleinfo[names(celfn), , drop=FALSE]
+  # sampleinfo <- data.frame("samplename"=names(celfns), "filename"=celfns, "chiptype"=chipt, "hybridization.date"=chipd[ , "day"], "hybridization.hour"=chipd[ , "hour"], "file.day"=celfile.timestamp[ , "file.day"], "file.hour"=celfile.timestamp[ , "file.hour"], "batchid"=NA, "cellid"=sampleinfo[ , "Source.Name"], sampleinfo)
+  # sampleinfo2 <- sampleinfo
   ## remove duplcated cell line hybridization
   
   
@@ -194,30 +196,49 @@ function (#gene=TRUE,
   
   ## drug information
   message("Read drug information")
-  druginfo <- read.csv(file.path("/pfs/gdscDrugInfo", "gdsc_drug_information.csv"))
+  druginfo <- read.csv(file.path("/Volumes/pfs/gdscDrugInfo", "gdsc_drug_information.csv"))
   druginfo[!is.na(druginfo) & (druginfo == " " | druginfo == " ")] <- NA
   druginfo <- data.frame("drug.name"=toupper(gsub(badchars, "", druginfo[ , "Name"])), druginfo)
-  myx <- match(druginfo[ , "drug.name"], drugnid[ , "drug.name"])
-  if (any(is.na(myx))) { stop ("Some drugs have missing annotations") }
+  myx <- match(drugnid[ , "drug.id"], druginfo[ , "drug_id"])
+  myx[drugnid[,"drug.name"]=="CAMPTOTHECIN"] <- grep("SN-38", druginfo[,"Name"]) ## Fixing up CAMPTOTHECIN
+  if (any(is.na(myx))) { warning ("Some drugs have missing annotations") }
   ## correct ambiguity for AZD6482: drugid_156 corresponds to the first occurence of AZD6482 while drugid_1066 corresponds to the second
   ## table(!is.na(drugpheno[ , "drugid_156_AUC"]))
   ## table(!is.na(drugpheno[ , "drugid_1066_AUC"]))
-  myx[druginfo[ , "drug.name"] == "AZD6482"][2] <- which(drugnid[ , "drug.name"] == "AZD6482")[2]
-  druginfo <- data.frame("drugid"=rownames(drugnid)[myx], drugnid[myx, , drop=FALSE], druginfo)
+  # myx[drugnid[ , "drug.name"] == "AZD6482"][2] <- which(druginfo[ , "drug.name"] == "AZD6482")[2]
+  druginfo <- data.frame("drugid"=rownames(drugnid), drugnid, druginfo[myx, , drop=FALSE])
   rownames(druginfo) <- as.character(druginfo[ , "drugid"])
   ## complement drug infomration with the supplementary infomration from the Nature website
   # myfn2 <- file.path(saveres, "nature_supplinfo_druginfo_gdsc.RData")
   # if(!file.exists(myfn2)) {
-    druginfo.nature <- gdata::read.xls(xls=file.path("/pfs/gdscDrugInfo", "nature_supplementary_information.xls"), sheet=4)
+    druginfo.nature <- as.data.frame(readxl::read_xlsx(file.path("/Volumes/pfs/gdscDrugInfo", "nature_supplementary_information.xls"), sheet=4,  .name_repair=make.names))
     druginfo.nature[druginfo.nature == "" | druginfo.nature == " "] <- NA
     # save(list="druginfo.nature", compress=TRUE, file=myfn2)
   # } else { load(myfn2) }
   rownames(druginfo.nature) <- paste("drugid", druginfo.nature[ , "Drug.ID"], sep="_")
-  druginfo <- data.frame(druginfo, druginfo.nature[rownames(druginfo), c("Brand.name", "Site.of.screening", "Drug.type", "Drug.class.I", "Drug.class.II", "Target.family", "Effector.pathway.biological.process", "Clinical.trials", "Source")])
+  druginfo <- data.frame(druginfo, druginfo.nature[match(druginfo[,"drug_id"],druginfo.nature[ , "Drug.ID"]), c("Brand.name", "Site.of.screening", "Drug.type", "Drug.class.I", "Drug.class.II", "Target.family", "Effector.pathway.biological.process", "Clinical.trials", "Source")])
 
+  ## Deduplicate AD6482
+  collapseRows2 <- function(x, rows){
+    xNew <- lapply(x[rows, ], function(x) {
+      xx <- na.omit(x)
+      if (length(xx) == 0) {
+        xx <- NA
+      }
+      if (length(unique(xx)) > 1) {
+        xx <- paste(xx, collapse="///")
+      } else {xx <- xx[1]}
+      return(as.vector(xx))
+      })
+    xNew <- as.data.frame(xNew, as.is = TRUE)
+    x[rows[1], ] <- xNew
+    x <- x[-rows[-1], ]
+    return(x)
+  }
+  druginfo <- collapseRows2(druginfo, which(druginfo$Name %in% "AZD6482"))
   ## drug concentration
   message("Read drug concentration")
-  drugconc <- read.csv(file.path("/pfs/gdscDrugInfo", "gdsc_drug_concentration.csv"))
+  drugconc <- read.csv(file.path("/Volumes/pfs/gdscDrugInfo", "gdsc_drug_concentration.csv"))
   drugconc[!is.na(drugconc) & (drugconc == "" | drugconc == " ")] <- NA
   drugconc <- data.frame("drug.name"=toupper(gsub(badchars, "", drugconc[ , "Compound.Name"])), drugconc)
   if(all(!is.element(drugconc[ , "drug.name"], drugnid[ , "drug.name"]))) { stop("Screening concentration for drugs without identifiers!") }
@@ -258,15 +279,16 @@ function (#gene=TRUE,
   drugconc <- drugconc2
   
   ##
-  annot <- read.csv(system.file("extdata", "annot_ensembl_all_genes.csv", package="PharmacoGx"), stringsAsFactors=FALSE, check.names=FALSE, header=TRUE, row.names=1)
+  annot <- read.csv(file.path("/Volumes/pfs/downAnnotations", "annot_ensembl_all_genes.csv"), stringsAsFactors=FALSE, check.names=FALSE, header=TRUE, row.names=1)
   
 
   ## normalization of gene expression data
   myf <- "GDSC_U219_ENSG.RData"
 
-  load(file.path("/pfs/gdscU219normalized", myf), verbose=TRUE)
+  load(file.path("/Volumes/pfs/gdscU219normalized", myf), verbose=TRUE)
 
   ### the new microarray data loaded to gdsc.u219.ensg
+  gdsc.u219.ensg <- cgp.u219.ensg
   annotation(gdsc.u219.ensg) <- "rna"
   ensemblIds <- sapply(strsplit(rownames(exprs(gdsc.u219.ensg)), "_"), function (x) { return (x[[1]]) }) 
   fData(gdsc.u219.ensg) <- data.frame("Probe"=rownames(exprs(gdsc.u219.ensg)), 
@@ -279,18 +301,20 @@ function (#gene=TRUE,
   pData(gdsc.u219.ensg)[,"batchid"] <- NA
 
 
+##TODO: broken from here down
 	  
 
-  myfn2 <- file.path("/pfs/gdscU133anormalized", "GDSC_U133a_ENSG.RData")
+  myfn2 <- file.path("/Volumes/pfs/gdscU133anormalized", "GDSC_U133a_ENSG.RData")
   load(myfn2)
   #eset <- just.rma(filenames=celfn, verbose=TRUE, cdfname="hgu133ahsensgcdf")
-  eset <- just.rma(filenames=celfn, verbose=TRUE, cdfname="hthgu133ahsensgcdf")
-  
-  pData(eset) <- as.data.frame(sampleinfo[match(gsub("[.]CEL[.]gz$", "", rownames(pData(eset))), rownames(sampleinfo)), , drop=FALSE])
-  colnames(exprs(eset)) <- rownames(pData(eset)) <- gsub("[.]CEL[.]gz$", "", colnames(exprs(eset)))
+  # eset <- just.rma(filenames=celfn, verbose=TRUE, cdfname="hthgu133ahsensgcdf")
+  eset <- cgp.u133a.ensg
+  # pData(eset) <- as.data.frame(sampleinfo[match(gsub("[.]CEL[.]gz$", "", rownames(pData(eset))), rownames(sampleinfo)), , drop=FALSE])
+  # colnames(exprs(eset)) <- rownames(pData(eset)) <- gsub("[.]CEL[.]gz$", "", colnames(exprs(eset)))
   controls <- rownames(exprs(eset))[grep("AFFX", rownames(exprs(eset)))]
-  fData(eset) <- fData(eset)[which(!rownames(fData(eset)) %in% controls), , drop=FALSE]
-  exprs(eset) <- exprs(eset)[which(!rownames(exprs(eset)) %in% controls), , drop=FALSE]
+  # fData(eset) <- fData(eset)[which(!rownames(fData(eset)) %in% controls), , drop=FALSE]
+  # exprs(eset) <- exprs(eset)[which(!rownames(exprs(eset)) %in% controls), , drop=FALSE]
+  eset <- eset[!rownames(eset) %in% controls,]
   ensemblIds <- sapply(strsplit(rownames(exprs(eset)), "_"), function (x) { return (x[[1]]) }) 
   fData(eset) <- data.frame("Probe"=rownames(exprs(eset)), 
                             "EnsemblGeneId"=ensemblIds,
@@ -303,10 +327,10 @@ function (#gene=TRUE,
   annotation(eset) <- "rna"
         
   ## match the experiment labels
-  myx <- rownames(sampleinfo)[match(rownames(genexprs), gsub(".CEL.gz", "", as.character(sampleinfo[ , "filename"])))]
-  genexprs <- genexprs[!is.na(myx), , drop=FALSE]
-  myx <- myx[!is.na(myx)]
-  rownames(genexprs) <- myx
+  # myx <- rownames(sampleinfo)[match(rownames(genexprs), gsub(".CEL.gz", "", as.character(sampleinfo[ , "filename"])))]
+  # genexprs <- genexprs[!is.na(myx), , drop=FALSE]
+  # myx <- myx[!is.na(myx)]
+  # rownames(genexprs) <- myx
 
   ## build annotation matrix
   message("Build annotation matrix")
@@ -362,6 +386,8 @@ function (#gene=TRUE,
   
    ## cell lines and drugs
    # cellnall <- sort(unique(c(as.character(sampleinfo[ , "cellid"]), as.character(drugpheno[ , "cellid"]), rownames(genexprs), rownames(mutation))))
+   sampleinfo <- pData(eset)
+
    cellnall <- sort(unique(c(as.character(sampleinfo[ , "cellid"]), as.character(drugpheno[ , "cellid"]), rownames(mutation))))
    
    drugnall <- sort(unique(c(rownames(druginfo), as.character(drugconc[ , "drugid"]), paste("drugid", sapply(strsplit(colnames(drugpheno)[grep("^drugid_", colnames(drugpheno))], "_"), function(x) { return(x[[2]]) }), sep="_"))))
@@ -388,7 +414,7 @@ function (#gene=TRUE,
    mutation <- dd
    
    MutationEset <- ExpressionSet(t(mutation)) 
-   geneMap <- read.csv("/pfs/downAnnotations/annot_ensembl_all_genes.csv")
+   geneMap <- read.csv("/Volumes/pfs/downAnnotations/annot_ensembl_all_genes.csv")
    geneInfoM <- geneMap[na.omit(match(rownames(MutationEset),geneMap[ , "gene_name"]) ), c('gene_biotype','gene_name','EntrezGene.ID')] 
    rownames(geneInfoM) <- geneInfoM[ , "gene_name"]     
    geneInfoM <- geneInfoM[rownames(MutationEset),]      
@@ -477,9 +503,9 @@ function (#gene=TRUE,
   celline <- dd
   celline[ , "cell_id"] <- celline[ , "CELL_LINE_NAME"] <- rownames(celline)
   ## annotate cell lines with curated tissue type
-  tissue.type <- read.csv(file.path(system.file("extdata", package="PharmacoGx"), "cell_line_collection_all.csv"), stringsAsFactors=FALSE)
-  rownames(tissue.type) <- tissue.type[ , 1]
-  celline <- cbind("tissue.type"=tissue.type[match(celline[ , "cell_id"], tissue.type[ , "cell_id"]), "tissue.type"], celline)
+  tissue.type <- read.csv(file.path("/Volumes/pfs/downAnnotations", "cell_annotation_all.csv"), stringsAsFactors=FALSE)
+  rownames(tissue.type) <- tissue.type[ , "unique.cellid"]
+  celline <- cbind("tissue.type"=tissue.type[match(celline[ , "cell_id"], tissue.type[ , "CGP.cellid"]), "unique.tissueid"], celline)
   
   
   # ## update drugconc
@@ -535,7 +561,6 @@ function (#gene=TRUE,
   
   
   
-  experimentData(eset)@preprocessing <- list(Normalisation=list(name="rma", package="affy", version=as.character(packageVersion("affy")))) 
  
   #raw.sensitivity <- read.csv(file.path(inst("PharmacoGx"), "extdata", "gdsc_sensitivity_detail.csv"))
   getGDSCrawData <-
@@ -596,18 +621,8 @@ function (#gene=TRUE,
     }
   }
 
-  load("/pfs/gdscRawSensitivity/GDSC_sens_raw.RData")
-  con_tested <- raw.sensitivity$concentrations.no
-  raw.sensitivity <- t(raw.sensitivity$data)
-  raw.sensitivity <- t(apply(raw.sensitivity, 1, function(x){unlist(x)}))
-
-
-  raw.sensitivity[ , 2] <- paste("drugid", raw.sensitivity[ , 2], sep="_")
-  rownames(raw.sensitivity)  <- paste(as.character(raw.sensitivity[ , 2]),raw.sensitivity[ , 1], sep="_")
-  raw.sensitivity <- raw.sensitivity[, -c(1, 2)]
-  raw.sensitivity <- array(c(as.matrix(raw.sensitivity[ , 1:con_tested]), as.matrix(raw.sensitivity[,(con_tested+1):(2*con_tested)])), c(nrow(raw.sensitivity), con_tested, 2),
-                            dimnames=list(rownames(raw.sensitivity), colnames(raw.sensitivity[ , 1:con_tested]), c("Dose", "Viability")))
-  
+  load("/Volumes/pfs/gdscRawSensitivity/GDSC_sens_raw.RData")
+  con_tested <- con_tested
   
   drugconc <- drugconc[rownames(raw.sensitivity),]
   duration <- rep(x=72, length=nrow(drugconc))
@@ -622,14 +637,14 @@ function (#gene=TRUE,
 	 #  load(myfn, verbose=TRUE)
   # }
 
-  recomputed <- readRDS("/pfs/gdscProfiles/gdscProfiles.rds")
+  recomputed <- readRDS("/Volumes/pfs/gdscProfiles/gdscProfiles.rds")
 
   profiles <- cbind(profiles, recomputed[rownames(profiles)])    
 
 
   
   	
-  cell_all <- read.csv("/pfs/downAnnotations/cell_annotation_all.csv", na.strings=c("", " ", "NA"))
+  cell_all <- read.csv("/Volumes/pfs/downAnnotations/cell_annotation_all.csv", na.strings=c("", " ", "NA"))
   rownames(cell_all) <- cell_all[, "unique.cellid"]
 
   curationCell <- cell_all[which(!is.na(cell_all[ , "CGP.cellid"]) | !is.na(cell_all[, "CGP_EMTAB3610.cellid"])),]
@@ -644,7 +659,7 @@ function (#gene=TRUE,
 	rownames(curationTissue) <- curationCell[, "unique.cellid"]
 	rownames(curationCell) <- curationCell[, "unique.cellid"]
 
-	drug_all <- read.csv("/pfs/downAnnotations/drug_annotation_all.csv", na.strings=c("", " ", "NA"))
+	drug_all <- read.csv("/Volumes/pfs/downAnnotations/drug_annotation_all.csv", na.strings=c("", " ", "NA"))
 	curationDrug <- drug_all[ , c("unique.drugid", "CGP.drugid")]
 	colnames(curationDrug) <- gsub("CGP", "GDSC", colnames(curationDrug))
 
@@ -660,8 +675,8 @@ function (#gene=TRUE,
   pData(gdsc.u219.ensg)[, "cellid"] <- rownames(curationCell)[match(pData(gdsc.u219.ensg)[, "Characteristics.cell.line."], curationCell[, "GDSC_EMTAB3610.cellid"])]
 
   #integrate cell slot with all the extra new rna cells
-  celline[which(celline[, "cell_id"] == "KMS12-BM"), "cell_id"] <- "KMS-12-BM"
-  rownames(celline) <- rownames(curationCell)[match(celline[, "cell_id"], curationCell[, "GDSC.cellid"])]
+  # celline[which(celline[, "cell_id"] == "KMS12-BM"), "cell_id"] <- "KMS-12-BM"
+  rownames(celline) <- rownames(curationCell)[match(celline[, "cell_id"], curationCell[, "CGP.cellid"])]
   celline <- cbind(celline, "GDSC_EMTAB3610.cellid"=curationCell[rownames(celline), "GDSC_EMTAB3610.cellid"])
   ##after cbind NA is replaced by emty strings!!!
   celline[!is.na(celline) & celline == ""] <- NA
@@ -715,7 +730,7 @@ function (#gene=TRUE,
 
   ## fusion genes 
   ## TODO:: is this not just drugpheno?
-  myf <- "/pfs/gdscDrugInfo/dwl/gdsc_manova_input_w5.csv"
+  myf <- "/Volumes/pfs/gdscDrugInfo/dwl/gdsc_manova_input_w5.csv"
 
   gdsc_manova_input <- read.csv(myf, stringsAsFactors=FALSE, header=TRUE, na.strings=c("", " "))
   gdsc_manova_input <- gdsc_manova_input[7:nrow(gdsc_manova_input),]
@@ -834,5 +849,5 @@ function (#gene=TRUE,
   
 }
 GDSC <- getGDSC()
-save(GDSC, file="/pfs/out/GDSC.RData")
+save(GDSC, file="/Volumes/pfs/out/GDSC.RData")
 ## End
