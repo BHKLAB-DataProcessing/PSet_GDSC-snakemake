@@ -39,16 +39,16 @@ function (#gene=TRUE,
   # downloadGDSCdrugs(path.data=path.data, path.drug=path.drug)
   
   # celline <- generateGDSCCell.lines(path.data=path.data, path.cell=path.cell, saveres=saveres)
-  celline <- get(load("/Volumes/pfs/gdscCellInfo/celline.gdsc.RData"))
+  celline <- get(load("/pfs/gdscCellInfo/celline.gdsc.RData"))
   celline[celline[, "Sample.name"] == "NTERA-2_cl_D1", "Sample.name"] <- "NTERA-S-cl-D1"
 
   cosmic <- celline 
   
   ## profiles for the drugs
   message("Read drug sensitivity measurements")
-  # myfn2 <- file.path("/Volumes/pfs/gdscDrugInfo", "gdsc_drug_sensitivity.RData")
+  # myfn2 <- file.path("/pfs/gdscDrugInfo", "gdsc_drug_sensitivity.RData")
   # if(!file.exists(myfn2)) {
-  drugpheno <- read.csv(file.path("/Volumes/pfs/gdscDrugInfo", "gdsc_drug_sensitivity.csv"))
+  drugpheno <- read.csv(file.path("/pfs/gdscDrugInfo", "gdsc_drug_sensitivity.csv"))
   drugpheno[drugpheno == "" | drugpheno == " "] <- NA
     # save(list="drugpheno", compress=TRUE, file=myfn2)
   # } else { load(myfn2) }
@@ -98,7 +98,7 @@ function (#gene=TRUE,
   
   ### info about each experiment
   # message("Read sample information")
-  # sampleinfo <- read.csv(file.path("/Volumes/pfs/gdscU133a", "gdsc_ge_sampleinfo.txt"), sep="\t")
+  # sampleinfo <- read.csv(file.path("/pfs/gdscU133a", "gdsc_ge_sampleinfo.txt"), sep="\t")
   # sampleinfo[sampleinfo == "" | sampleinfo == " "] <- NA
   # ## curate cell line names
   # sampleinfo[sampleinfo[ , "Source.Name"] == "MZ2-MEL.", "Source.Name"] <- "MZ2-MEL"
@@ -196,7 +196,7 @@ function (#gene=TRUE,
   
   ## drug information
   message("Read drug information")
-  druginfo <- read.csv(file.path("/Volumes/pfs/gdscDrugInfo", "gdsc_drug_information.csv"))
+  druginfo <- read.csv(file.path("/pfs/gdscDrugInfo", "gdsc_drug_information.csv"))
   druginfo[!is.na(druginfo) & (druginfo == " " | druginfo == " ")] <- NA
   druginfo <- data.frame("drug.name"=toupper(gsub(badchars, "", druginfo[ , "Name"])), druginfo)
   myx <- match(drugnid[ , "drug.id"], druginfo[ , "drug_id"])
@@ -211,7 +211,7 @@ function (#gene=TRUE,
   ## complement drug infomration with the supplementary infomration from the Nature website
   # myfn2 <- file.path(saveres, "nature_supplinfo_druginfo_gdsc.RData")
   # if(!file.exists(myfn2)) {
-    druginfo.nature <- as.data.frame(readxl::read_xlsx(file.path("/Volumes/pfs/gdscDrugInfo", "nature_supplementary_information.xls"), sheet=4,  .name_repair=make.names))
+    druginfo.nature <- as.data.frame(readxl::read_xlsx(file.path("/pfs/gdscDrugInfo", "nature_supplementary_information.xls"), sheet=4,  .name_repair=make.names))
     druginfo.nature[druginfo.nature == "" | druginfo.nature == " "] <- NA
     # save(list="druginfo.nature", compress=TRUE, file=myfn2)
   # } else { load(myfn2) }
@@ -238,7 +238,7 @@ function (#gene=TRUE,
   druginfo <- collapseRows2(druginfo, which(druginfo$Name %in% "AZD6482"))
   ## drug concentration
   message("Read drug concentration")
-  drugconc <- read.csv(file.path("/Volumes/pfs/gdscDrugInfo", "gdsc_drug_concentration.csv"))
+  drugconc <- read.csv(file.path("/pfs/gdscDrugInfo", "gdsc_drug_concentration.csv"))
   drugconc[!is.na(drugconc) & (drugconc == "" | drugconc == " ")] <- NA
   drugconc <- data.frame("drug.name"=toupper(gsub(badchars, "", drugconc[ , "Compound.Name"])), drugconc)
   if(all(!is.element(drugconc[ , "drug.name"], drugnid[ , "drug.name"]))) { stop("Screening concentration for drugs without identifiers!") }
@@ -279,13 +279,13 @@ function (#gene=TRUE,
   drugconc <- drugconc2
   
   ##
-  annot <- read.csv(file.path("/Volumes/pfs/downAnnotations", "annot_ensembl_all_genes.csv"), stringsAsFactors=FALSE, check.names=FALSE, header=TRUE, row.names=1)
+  annot <- read.csv(file.path("/pfs/downAnnotations", "annot_ensembl_all_genes.csv"), stringsAsFactors=FALSE, check.names=FALSE, header=TRUE, row.names=1)
   
 
   ## normalization of gene expression data
   myf <- "GDSC_U219_ENSG.RData"
 
-  load(file.path("/Volumes/pfs/gdscU219normalized", myf), verbose=TRUE)
+  load(file.path("/pfs/gdscU219normalized", myf), verbose=TRUE)
 
   ### the new microarray data loaded to gdsc.u219.ensg
   gdsc.u219.ensg <- cgp.u219.ensg
@@ -304,7 +304,7 @@ function (#gene=TRUE,
 ##TODO: broken from here down
 	  
 
-  myfn2 <- file.path("/Volumes/pfs/gdscU133anormalized", "GDSC_U133a_ENSG.RData")
+  myfn2 <- file.path("/pfs/gdscU133anormalized", "GDSC_U133a_ENSG.RData")
   load(myfn2)
   #eset <- just.rma(filenames=celfn, verbose=TRUE, cdfname="hgu133ahsensgcdf")
   # eset <- just.rma(filenames=celfn, verbose=TRUE, cdfname="hthgu133ahsensgcdf")
@@ -414,7 +414,7 @@ function (#gene=TRUE,
    mutation <- dd
    
    MutationEset <- ExpressionSet(t(mutation)) 
-   geneMap <- read.csv("/Volumes/pfs/downAnnotations/annot_ensembl_all_genes.csv")
+   geneMap <- read.csv("/pfs/downAnnotations/annot_ensembl_all_genes.csv")
    geneInfoM <- geneMap[na.omit(match(rownames(MutationEset),geneMap[ , "gene_name"]) ), c('gene_biotype','gene_name','EntrezGene.ID')] 
    rownames(geneInfoM) <- geneInfoM[ , "gene_name"]     
    geneInfoM <- geneInfoM[rownames(MutationEset),]      
@@ -503,7 +503,7 @@ function (#gene=TRUE,
   celline <- dd
   celline[ , "cell_id"] <- celline[ , "CELL_LINE_NAME"] <- rownames(celline)
   ## annotate cell lines with curated tissue type
-  tissue.type <- read.csv(file.path("/Volumes/pfs/downAnnotations", "cell_annotation_all.csv"), stringsAsFactors=FALSE)
+  tissue.type <- read.csv(file.path("/pfs/downAnnotations", "cell_annotation_all.csv"), stringsAsFactors=FALSE)
   rownames(tissue.type) <- tissue.type[ , "unique.cellid"]
   celline <- cbind("tissue.type"=tissue.type[match(celline[ , "cell_id"], tissue.type[ , "CGP.cellid"]), "unique.tissueid"], celline)
   
@@ -621,7 +621,7 @@ function (#gene=TRUE,
     }
   }
 
-  load("/Volumes/pfs/gdscRawSensitivity/GDSC_sens_raw.RData")
+  load("/pfs/gdscRawSensitivity/GDSC_sens_raw.RData")
   con_tested <- con_tested
   
   drugconc <- drugconc[rownames(raw.sensitivity),]
@@ -637,14 +637,14 @@ function (#gene=TRUE,
 	 #  load(myfn, verbose=TRUE)
   # }
 
-  recomputed <- readRDS("/Volumes/pfs/gdscProfiles/gdscProfiles.rds")
+  recomputed <- readRDS("/pfs/gdscProfiles/gdscProfiles.rds")
 
   profiles <- cbind(profiles, recomputed[rownames(profiles)])    
 
 
   
   	
-  cell_all <- read.csv("/Volumes/pfs/downAnnotations/cell_annotation_all.csv", na.strings=c("", " ", "NA"))
+  cell_all <- read.csv("/pfs/downAnnotations/cell_annotation_all.csv", na.strings=c("", " ", "NA"))
   rownames(cell_all) <- cell_all[, "unique.cellid"]
 
   curationCell <- cell_all[which(!is.na(cell_all[ , "CGP.cellid"]) | !is.na(cell_all[, "CGP_EMTAB3610.cellid"])),]
@@ -659,7 +659,7 @@ function (#gene=TRUE,
 	rownames(curationTissue) <- curationCell[, "unique.cellid"]
 	rownames(curationCell) <- curationCell[, "unique.cellid"]
 
-	drug_all <- read.csv("/Volumes/pfs/downAnnotations/drug_annotation_all.csv", na.strings=c("", " ", "NA"))
+	drug_all <- read.csv("/pfs/downAnnotations/drug_annotation_all.csv", na.strings=c("", " ", "NA"))
 	curationDrug <- drug_all[ , c("unique.drugid", "CGP.drugid")]
 	colnames(curationDrug) <- gsub("CGP", "GDSC", colnames(curationDrug))
 
@@ -730,7 +730,7 @@ function (#gene=TRUE,
 
   ## fusion genes 
   ## TODO:: is this not just drugpheno?
-  myf <- "/Volumes/pfs/gdscDrugInfo/dwl/gdsc_manova_input_w5.csv"
+  myf <- "/pfs/gdscDrugInfo/dwl/gdsc_manova_input_w5.csv"
 
   gdsc_manova_input <- read.csv(myf, stringsAsFactors=FALSE, header=TRUE, na.strings=c("", " "))
   gdsc_manova_input <- gdsc_manova_input[7:nrow(gdsc_manova_input),]
@@ -849,5 +849,5 @@ function (#gene=TRUE,
   
 }
 GDSC <- getGDSC()
-save(GDSC, file="/Volumes/pfs/out/GDSC.RData")
+save(GDSC, file="/pfs/out/GDSC.RData")
 ## End
