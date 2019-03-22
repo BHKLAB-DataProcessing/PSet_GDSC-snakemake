@@ -622,7 +622,7 @@ function (#gene=TRUE,
   }
 
   load("/pfs/gdscRawSensitivity/GDSC_sens_raw.RData")
-  con_tested <- con_tested
+  # con_tested <- con_tested
   
   drugconc <- drugconc[rownames(raw.sensitivity),]
   duration <- rep(x=72, length=nrow(drugconc))
