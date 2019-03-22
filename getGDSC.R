@@ -650,6 +650,7 @@ function (#gene=TRUE,
   curationCell <- cell_all[which(!is.na(cell_all[ , "CGP.cellid"]) | !is.na(cell_all[, "CGP_EMTAB3610.cellid"])),]
   curationTissue <- cell_all[which(!is.na(cell_all[ , "CGP.cellid"]) | !is.na(cell_all[, "CGP_EMTAB3610.cellid"])),]
 
+  str(curationCell)
 
 	curationCell <- curationCell[ , c("unique.cellid", "CGP.cellid", "CGP_EMTAB3610.cellid")]
 	colnames(curationCell) <- gsub("CGP", "GDSC", colnames(curationCell))
