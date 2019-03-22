@@ -657,7 +657,11 @@ function (#gene=TRUE,
 	curationTissue <- curationTissue[ , c("unique.tissueid", "CGP.tissueid", "CGP_EMTAB3610.tissueid")]
 	colnames(curationTissue) <- gsub("CGP", "GDSC", colnames(curationTissue))
 	
+  message("set tissue names")
 	rownames(curationTissue) <- curationCell[, "unique.cellid"]
+
+  message("set cell names")
+
 	rownames(curationCell) <- curationCell[, "unique.cellid"]
 
 	drug_all <- read.csv("/pfs/downAnnotations/drug_annotation_all.csv", na.strings=c("", " ", "NA"))
