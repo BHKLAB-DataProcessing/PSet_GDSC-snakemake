@@ -677,7 +677,7 @@ function (#gene=TRUE,
 
   #integrate cell slot with all the extra new rna cells
   # celline[which(celline[, "cell_id"] == "KMS12-BM"), "cell_id"] <- "KMS-12-BM"
-  rownames(celline) <- rownames(curationCell)[match(celline[, "cell_id"], curationCell[, "CGP.cellid"])]
+  rownames(celline) <- rownames(curationCell)[match(celline[, "cell_id"], curationCell[, "GDSC.cellid"])]
   celline <- cbind(celline, "GDSC_EMTAB3610.cellid"=curationCell[rownames(celline), "GDSC_EMTAB3610.cellid"])
   ##after cbind NA is replaced by emty strings!!!
   celline[!is.na(celline) & celline == ""] <- NA
