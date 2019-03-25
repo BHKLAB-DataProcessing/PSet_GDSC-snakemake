@@ -683,7 +683,6 @@ function (#gene=TRUE,
   pData(eset)[, "cellid"] <- rownames(curationCell)[match(pData(eset)[, "cellid"], curationCell[, "GDSC.cellid"])]
   pData(gdsc.u219.ensg)[, "cellid"] <- rownames(curationCell)[match(pData(gdsc.u219.ensg)[, "Characteristics.cell.line."], curationCell[, "GDSC_EMTAB3610.cellid"])]
 
-  browser()
 
   #integrate cell slot with all the extra new rna cells
   # celline[which(celline[, "cell_id"] == "KMS12-BM"), "cell_id"] <- "KMS-12-BM"
