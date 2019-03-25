@@ -4,7 +4,7 @@
 ## 
 #################################################
 library(PharmacoGxPrivate)
-options(error=traceback)
+# options(error=traceback)
 getGDSC <- 
 function (#gene=TRUE, 
 			tmpdir=tempdir(),
