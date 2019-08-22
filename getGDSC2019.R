@@ -31,7 +31,7 @@ switch(version, v1 = {
 	}, v2 = {
 	myOutFile <- "GDSC_v2.RData"
 	myInPrefix <- "gdscv2"
-	control.column <- "NC-1"
+  sensFolder <- "GDSC2019v2Normalize"
 	})
 
 message("Loading Sensitivity Data")
