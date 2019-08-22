@@ -28,10 +28,14 @@ switch(version, v1 = {
 	myOutFile <- "GDSC_v1.RData"
 	myInPrefix <- "gdscv1"
   sensFolder <- "GDSC2019v1Normalize"
+  profFolder <- "gdscProfilesV1"
+
 	}, v2 = {
 	myOutFile <- "GDSC_v2.RData"
 	myInPrefix <- "gdscv2"
   sensFolder <- "GDSC2019v2Normalize"
+  profFolder <- "gdscProfilesV2"
+
 	})
 
 message("Loading Sensitivity Data")
@@ -52,7 +56,7 @@ rownames(sens.raw) <- sens.info$exp_id
 
 # sens.profiles <- cbind(data.frame("AAC" = sens.recalc$AUC, "IC50" = sens.recalc$IC50), sens.pars)
 
-load(file.path(myDirPrefix, "gdscProfilesV1/profiles.RData"))
+load(file.path(myDirPrefix, profFolder, "profiles.RData"))
 
 sens.profiles <- res
 
