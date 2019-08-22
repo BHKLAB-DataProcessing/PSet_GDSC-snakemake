@@ -294,7 +294,8 @@ message("Saving")
 
 
 save(GDSC, file=paste0("/pfs/out/GDSC", version, ".RData"))
-  
+saveRDS(GDSC, file=paste0("/pfs/out/GDSC", version, ".rds"))
+
 
 
 
