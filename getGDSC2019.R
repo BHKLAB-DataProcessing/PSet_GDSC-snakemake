@@ -293,8 +293,8 @@ GDSC <- PharmacoSet(molecularProfiles=list("rna"=gdsc.u219.ensg, "mutation"=Muta
 message("Saving")
 
 
-save(GDSC, file=paste0("/pfs/out/GDSC", version, ".RData"))
-saveRDS(GDSC, file=paste0("/pfs/out/GDSC", version, ".rds"))
+save(GDSC, file=paste0("/pfs/out/GDSC", version, ".RData"), version=2)
+saveRDS(GDSC, file=paste0("/pfs/out/GDSC", version, ".rds"), version=2)
 
 
 
