@@ -41,7 +41,7 @@ switch(version, v1 = {
 message("Loading Sensitivity Data")
 
 sens.info <- readRDS(file=file.path(myDirPrefix, sensFolder, paste0(myInPrefix, "_sens_info.rds")))
-sens.raw <- readRDS(file=file.path(myDirPrefix, sensFolder, paste0(myInPrefix, "_sens_info.rds")))
+sens.raw <- readRDS(file=file.path(myDirPrefix, sensFolder, paste0(myInPrefix, "_sens_raw.rds")))
 rownames(sens.info) <- sens.info$exp_id
 rownames(sens.raw) <- sens.info$exp_id
 
