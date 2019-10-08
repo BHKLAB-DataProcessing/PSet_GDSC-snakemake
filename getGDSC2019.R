@@ -216,7 +216,8 @@ curationCell <- data.frame(unique.cellid = rownames(cell.info),
 						   CGP.cellid = NA_character_,
 						   GDSC.SNP.cellid = NA_character_,
 						   CGP_EMTAB3610.cellid = NA_character_,
-			  			   GDSC_rnaseq.cellid = NA_character_)
+			  			   GDSC_rnaseq.cellid = NA_character_,
+			  		           GDSC1000.cellid = NA_character_)
 rownames(curationCell) <- curationCell$unique.cellid
 
 myx <- match(rownames(curationCell),cell.all$unique.cellid)
@@ -225,6 +226,7 @@ curationCell$CGP.cellid <- cell.all[myx, "CGP.cellid"]
 curationCell$GDSC.SNP.cellid <- cell.all[myx, "GDSC.SNP.cellid"]
 curationCell$CGP_EMTAB3610.cellid <- cell.all[myx, "CGP_EMTAB3610.cellid"]
 curationCell$GDSC_rnaseq.cellid <- cell.all[myx, "GDSC_rnaseq.cellid"]
+curationCell$GDSC1000.cellid <- cell.all[myx, "GDSC1000.cellid"]
 
 cell.info$tissueid <- cell.all[myx, "unique.tissueid"]
 
@@ -334,7 +336,7 @@ summarizeRnaSeq <- function (dir,
 rnaseq.sampleinfo <- read.csv("/pfs/downAnnotations/E-MTAB-3983.sdrf.txt", sep="\t")
 rownames(rnaseq.sampleinfo) <- rnaseq.sampleinfo$Comment.EGA_RUN.
 rnaseq.sampleinfo$cellid <- as.character(matchToIDTable(ids=rnaseq.sampleinfo$Source.Name, tbl=curationCell, column = "GDSC_rnaseq.cellid", returnColumn = "unique.cellid"))
-rnaseq.sampleinfo <- rnaseq.sampleinfo[,c(9,10,11,23,29,31,32,35,36)]
+rnaseq.sampleinfo <- rnaseq.sampleinfo[,c("cellid","Characteristics[organism part]","Characteristics[disease]","Characteristics[sex]","Scan Name","Comment[EGA_RUN]", "Comment[SUBMITTED_FILE_NAME]")]
    
 rnaseq <- summarizeRnaSeq(dir="/pfs/downloadgdscrnaseq/KallistoGDSC_hg38/KallistoGDSC_hg38", 
                                 tool="kallisto", 
@@ -342,11 +344,52 @@ rnaseq <- summarizeRnaSeq(dir="/pfs/downloadgdscrnaseq/KallistoGDSC_hg38/Kallist
                                 samples_annotation=rnaseq.sampleinfo)
 
 
+
+message("Compile All GDSC Mutation Data")
+
+mutation_raw <- read.csv("/pfs/gdscmutation_all/mutations_latest.csv", na.strings=c("", " ", "NA"))
+mutation_raw <- mutation_raw[,c("gene_symbol","protein_mutation","model_name")]
+cells_matched <- as.character(matchToIDTable(ids = mutation_raw[,3], tbl = curationCell, column = "GDSC1000.cellid", returnColumn = "unique.cellid"))
+mutation_raw[,3] <- cells_matched
+
+#concatenate cases where one cell line maps to the same gene twice ("///")
+#xx <- mutation_raw %>% group_by(gene_symbol, model_name) %>% 
+#      mutate(protein_mutation = paste(protein_mutation, collapse="///"))
+
+#xx_df <- data.frame(xx)
+
+#removes duplicated concatenation
+#xx_df_2 <- distinct(xx_df,gene_symbol, model_name,.keep_all = TRUE)
+
+#flatten data frame to gene name x cell line matrix
+#matrix_final <- reshape2::acast(xx_df_2, gene_symbol ~ model_name, value.var = "protein_mutation") #cannot complete due to issue with docker image
+#matrix_final[which(is.na(matrix_final))] <- "wt"
+
+load("/pfs/gdscmutation_all/GDSC_mutation_matrix.RData")
+
+geneMap <- read.csv("/pfs/downAnnotations/annot_ensembl_all_genes.csv")
+geneInfoM <- geneMap[na.omit(match(rownames(matrix_final),geneMap[ , "gene_name"])), c('gene_biotype','gene_name','EntrezGene.ID')] 
+rownames(geneInfoM) <- geneInfoM[ , "gene_name"] 
+missing_genes <- rownames(matrix_final)[which(!rownames(matrix_final) %in% geneMap$gene_name)]
+geneInfoM[nrow(geneInfoM)+ length(missing_genes),] <- NA
+rownames(geneInfoM)[18391:20064] <- missing_genes
+
+geneInfoM <- geneInfoM[rownames(matrix_final),] 
+
+MutationAll <- Biobase::ExpressionSet(matrix_final)
+tttt <- data.frame(row.names=colnames(MutationAll), colnames(MutationAll))
+colnames(tttt) <- 'cellid'
+pData(MutationAll) <- tttt
+fData(MutationAll) <- geneInfoM 
+annotation(MutationAll) <- "GDSC annotated mutation"
+pData(MutationAll)[, "batchid"] <- NA
+
+
 message("Making PSet")
 
 
 
-GDSC <- PharmacoSet(molecularProfiles=list("rna"=gdsc.u219.ensg, "mutation"=MutationEset, "fusion"=FusionEset, "cnv"=cl.eset, "rnaseq"=rnaseq$rnaseq, "rnaseq.counts"=rnaseq$rnaseq.counts, "isoforms"=rnaseq$isoforms, "isoforms.counts"=rnaseq$isoforms.counts),
+GDSC <- PharmacoSet(molecularProfiles=list("rna"=gdsc.u219.ensg, "mutation"=MutationEset, "mutation_all"=MutationAll ,"fusion"=FusionEset, "cnv"=cl.eset, "rnaseq"=rnaseq$rnaseq, "rnaseq.counts"=rnaseq$rnaseq.counts, "isoforms"=rnaseq$isoforms, "isoforms.counts"=rnaseq$isoforms.counts),
                       name=paste("GDSC", version, sep="_"), 
                       cell=cell.info, 
                       drug=drug.info, 
