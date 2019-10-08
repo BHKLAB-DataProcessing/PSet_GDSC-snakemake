@@ -345,7 +345,8 @@ rnaseq <- summarizeRnaSeq(dir="/pfs/downloadgdscrnaseq/KallistoGDSC_hg38/Kallist
 message("Making PSet")
 
 
-GDSC <- PharmacoSet(molecularProfiles=list("rna"=gdsc.u219.ensg, "mutation"=MutationEset, "fusion"=FusionEset, "cnv"=cl.eset, "rnaseq"=rnaseq[["gene_exp"]], "rnaseq.counts"= rnaseq[["gene_count"]], "isoforms"=rnaseq[["transcript_exp"]], "isoforms.counts"=rnaseq[["transcript_count"]]),
+
+GDSC <- PharmacoSet(molecularProfiles=list("rna"=gdsc.u219.ensg, "mutation"=MutationEset, "fusion"=FusionEset, "cnv"=cl.eset, "rnaseq"=rnaseq$rnaseq, "rnaseq.counts"=rnaseq$rnaseq.counts, "isoforms"=rnaseq$isoforms, "isoforms.counts"=rnaseq$isoforms.counts),
                       name=paste("GDSC", version, sep="_"), 
                       cell=cell.info, 
                       drug=drug.info, 
