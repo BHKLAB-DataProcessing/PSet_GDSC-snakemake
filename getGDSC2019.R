@@ -215,7 +215,8 @@ curationCell <- data.frame(unique.cellid = rownames(cell.info),
 						   GDSC2019.cellid = cell.info$Sample.Name,
 						   CGP.cellid = NA_character_,
 						   GDSC.SNP.cellid = NA_character_,
-						   CGP_EMTAB3610.cellid = NA_character_)
+						   CGP_EMTAB3610.cellid = NA_character_,
+			  			   GDSC_rnaseq.cellid = NA_character_)
 rownames(curationCell) <- curationCell$unique.cellid
 
 myx <- match(rownames(curationCell),cell.all$unique.cellid)
@@ -223,7 +224,7 @@ myx <- match(rownames(curationCell),cell.all$unique.cellid)
 curationCell$CGP.cellid <- cell.all[myx, "CGP.cellid"]
 curationCell$GDSC.SNP.cellid <- cell.all[myx, "GDSC.SNP.cellid"]
 curationCell$CGP_EMTAB3610.cellid <- cell.all[myx, "CGP_EMTAB3610.cellid"]
-
+curationCell$GDSC_rnaseq.cellid <- cell.all[myx, "GDSC_rnaseq.cellid"]
 
 cell.info$tissueid <- cell.all[myx, "unique.tissueid"]
 
