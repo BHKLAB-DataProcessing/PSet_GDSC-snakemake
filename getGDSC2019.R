@@ -330,14 +330,14 @@ summarizeRnaSeq <- function (dir,
     }
 
 
-rnaseq.sampleinfo <- read.csv("/pfs/downloadGDSCRNAProcessed/E-MTAB-3983.sdrf.txt", sep="\t")
+rnaseq.sampleinfo <- read.csv("/pfs/downAnnotations/E-MTAB-3983.sdrf.txt", sep="\t")
 rownames(rnaseq.sampleinfo) <- rnaseq.sampleinfo$Comment.EGA_RUN.
 rnaseq.sampleinfo$cellid <- as.character(matchToIDTable(ids=rnaseq.sampleinfo$Source.Name, tbl=curationCell, column = "GDSC_rnaseq.cellid", returnColumn = "unique.cellid"))
-rnaseq.sampleinfo <- rnaseq.sampleinfo[,c(9,10,11,23,29,31, 32, 35,36)]
+rnaseq.sampleinfo <- rnaseq.sampleinfo[,c(9,10,11,23,29,31,32,35,36)]
    
 rnaseq <- summarizeRnaSeq(dir="/pfs/downloadgdscrnaseq/KallistoGDSC_hg38/KallistoGDSC_hg38", 
                                 tool="kallisto", 
-                                features_annotation="/pfs/downloadGDSCRNAProcessed/Gencode.v23.annotation.RData",
+                                features_annotation="/pfs/downAnnotations/Gencode.v23.annotation.RData",
                                 samples_annotation=rnaseq.sampleinfo)
 
 
