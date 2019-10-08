@@ -274,10 +274,77 @@ drugsPresent <- sort(unique(sens.info$drugid))
 drug.info <- drug.info[drugsPresent,]
 
 
+message("Summarizing Processed RNAseq")
+
+summarizeRnaSeq <- function (dir, 
+                                 tool=c("kallisto", "stringtie", "cufflinks", "rsem", "salmon"), 
+                                 features_annotation,
+                                 samples_annotation) {
+      library(Biobase)
+      library(readr)
+      library(tximport)
+      
+      load(features_annotation)
+      tx2gene <- as.data.frame(cbind("transcript"=toil.transcripts$transcript_id, "gene"=toil.transcripts$gene_id))
+      
+      files <- list.files(dir, recursive = TRUE, full.names = T)
+      resFiles <- grep("abundance.h5", files)
+      resFiles <- files[resFiles]
+      length(resFiles)
+      names(resFiles) <- basename(dirname(resFiles))
+      
+      txi <- tximport(resFiles, type="kallisto", tx2gene=tx2gene)
+      head(txi$counts[,1:5])
+      dim(txi$counts)
+      
+      xx <- txi$abundance
+      gene.exp <- Biobase::ExpressionSet(log2(xx + 0.001))
+      fData(gene.exp) <- toil.genes[featureNames(gene.exp),]
+      pData(gene.exp) <- samples_annotation[sampleNames(gene.exp),]
+      annotation(gene.exp) <- "rnaseq"
+      
+      xx <- txi$counts
+      gene.count <- Biobase::ExpressionSet(log2(xx + 1))
+      fData(gene.count) <- toil.genes[featureNames(gene.count),]
+      pData(gene.count) <- samples_annotation[sampleNames(gene.count),]
+      annotation(gene.count) <- "rnaseq"
+      
+      txii <- tximport(resFiles, type="kallisto", txOut=T)
+      
+      xx <- txii$abundance
+      transcript.exp <- Biobase::ExpressionSet(log2(xx[,1:length(resFiles)] + 0.001))
+      fData(transcript.exp) <- toil.transcripts[featureNames(transcript.exp),]
+      pData(transcript.exp) <- samples_annotation[sampleNames(transcript.exp),]
+      annotation(transcript.exp) <- "isoforms"
+      
+      xx <- txii$counts
+      transcript.count <- Biobase::ExpressionSet(log2(xx[,1:length(resFiles)] + 1))
+      fData(transcript.count) <- toil.transcripts[featureNames(transcript.count),]
+      pData(transcript.count) <- samples_annotation[sampleNames(transcript.count),]
+      annotation(transcript.count) <- "isoforms"
+      
+      return(list("rnaseq"=gene.exp, 
+                  "rnaseq.counts"=gene.count, 
+                  "isoforms"=transcript.exp, 
+                  "isoforms.counts"=transcript.count))
+    }
+
+
+rnaseq.sampleinfo <- read.csv("/pfs/downloadGDSCRNAProcessed/E-MTAB-3983.sdrf.txt", sep="\t")
+rownames(rnaseq.sampleinfo) <- rnaseq.sampleinfo$Comment.EGA_RUN.
+rnaseq.sampleinfo$cellid <- as.character(matchToIDTable(ids=rnaseq.sampleinfo$Source.Name, tbl=curationCell, column = "GDSC_rnaseq.cellid", returnColumn = "unique.cellid"))
+rnaseq.sampleinfo <- rnaseq.sampleinfo[,c(9,10,11,23,29,31, 32, 35,36)]
+   
+rnaseq <- summarizeRnaSeq(dir="/pfs/downloadgdscrnaseq/KallistoGDSC_hg38/KallistoGDSC_hg38", 
+                                tool="kallisto", 
+                                features_annotation="/pfs/downloadGDSCRNAProcessed/Gencode.v23.annotation.RData",
+                                samples_annotation=rnaseq.sampleinfo)
+
+
 message("Making PSet")
 
 
-GDSC <- PharmacoSet(molecularProfiles=list("rna"=gdsc.u219.ensg, "mutation"=MutationEset, "fusion"=FusionEset, "cnv"=cl.eset),
+GDSC <- PharmacoSet(molecularProfiles=list("rna"=gdsc.u219.ensg, "mutation"=MutationEset, "fusion"=FusionEset, "cnv"=cl.eset, "rnaseq"=rnaseq[["gene_exp"]], "rnaseq.counts"= rnaseq[["gene_count"]], "isoforms"=rnaseq[["transcript_exp"]], "isoforms.counts"=rnaseq[["transcript_count"]]),
                       name=paste("GDSC", version, sep="_"), 
                       cell=cell.info, 
                       drug=drug.info, 
