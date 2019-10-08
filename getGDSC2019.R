@@ -336,7 +336,7 @@ summarizeRnaSeq <- function (dir,
 rnaseq.sampleinfo <- read.csv("/pfs/downAnnotations/E-MTAB-3983.sdrf.txt", sep="\t")
 rownames(rnaseq.sampleinfo) <- rnaseq.sampleinfo$Comment.EGA_RUN.
 rnaseq.sampleinfo$cellid <- as.character(matchToIDTable(ids=rnaseq.sampleinfo$Source.Name, tbl=curationCell, column = "GDSC_rnaseq.cellid", returnColumn = "unique.cellid"))
-rnaseq.sampleinfo <- rnaseq.sampleinfo[,c("cellid","Characteristics[organism part]","Characteristics[disease]","Characteristics[sex]","Scan Name","Comment[EGA_RUN]", "Comment[SUBMITTED_FILE_NAME]")]
+rnaseq.sampleinfo <- rnaseq.sampleinfo[,c("cellid","Characteristics.organism.part.","Characteristics.disease.","Characteristics.sex.","Scan.Name","Comment.EGA_RUN.")]
    
 rnaseq <- summarizeRnaSeq(dir="/pfs/downloadgdscrnaseq/KallistoGDSC_hg38/KallistoGDSC_hg38", 
                                 tool="kallisto", 
