@@ -347,10 +347,11 @@ rnaseq <- summarizeRnaSeq(dir="/pfs/downloadgdscrnaseq/KallistoGDSC_hg38/Kallist
 
 message("Compile All GDSC Mutation Data")
 
-mutation_raw <- read.csv("/pfs/gdscmutation_all/mutations_latest.csv", na.strings=c("", " ", "NA"))
-mutation_raw <- mutation_raw[,c("gene_symbol","protein_mutation","model_name")]
-cells_matched <- as.character(matchToIDTable(ids = mutation_raw[,3], tbl = curationCell, column = "GDSC1000.cellid", returnColumn = "unique.cellid"))
-mutation_raw[,3] <- cells_matched
+#need to install reshape2 in docker image
+#mutation_raw <- read.csv("/pfs/gdscmutation_all/mutations_latest.csv", na.strings=c("", " ", "NA"))
+#mutation_raw <- mutation_raw[,c("gene_symbol","protein_mutation","model_name")]
+#cells_matched <- as.character(matchToIDTable(ids = mutation_raw[,3], tbl = curationCell, column = "GDSC1000.cellid", returnColumn = "unique.cellid"))
+#mutation_raw[,3] <- cells_matched
 
 #concatenate cases where one cell line maps to the same gene twice ("///")
 #xx <- mutation_raw %>% group_by(gene_symbol, model_name) %>% 
