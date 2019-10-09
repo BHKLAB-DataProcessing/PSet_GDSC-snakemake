@@ -382,7 +382,7 @@ tttt <- data.frame(row.names=colnames(MutationAll), colnames(MutationAll))
 colnames(tttt) <- 'cellid'
 pData(MutationAll) <- tttt
 fData(MutationAll) <- geneInfoM 
-annotation(MutationAll) <- "GDSC annotated mutation"
+annotation(MutationAll) <- "mutation"
 pData(MutationAll)[, "batchid"] <- NA
 
 
@@ -390,7 +390,7 @@ message("Making PSet")
 
 
 
-GDSC <- PharmacoSet(molecularProfiles=list("rna"=gdsc.u219.ensg, "mutation"=MutationEset, "mutation_all"=MutationAll ,"fusion"=FusionEset, "cnv"=cl.eset, "rnaseq"=rnaseq$rnaseq, "rnaseq.counts"=rnaseq$rnaseq.counts, "isoforms"=rnaseq$isoforms, "isoforms.counts"=rnaseq$isoforms.counts),
+GDSC <- PharmacoSet(molecularProfiles=list("rna"=gdsc.u219.ensg, "mutation"=MutationEset, "mutation_exome"=MutationAll ,"fusion"=FusionEset, "cnv"=cl.eset, "rnaseq"=rnaseq$rnaseq, "rnaseq.counts"=rnaseq$rnaseq.counts, "isoforms"=rnaseq$isoforms, "isoforms.counts"=rnaseq$isoforms.counts),
                       name=paste("GDSC", version, sep="_"), 
                       cell=cell.info, 
                       drug=drug.info, 
