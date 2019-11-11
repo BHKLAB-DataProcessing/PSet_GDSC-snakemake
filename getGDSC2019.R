@@ -167,10 +167,128 @@ load(file.path(myDirPrefix, "gdscDrugInfo/drugInfo.RData"))
 
 rownames(cell.info) <- cell.info$unique.cellid
 
+
+
+message("Summarizing Processed RNAseq")
+
+summarizeRnaSeq <- function (dir, 
+                                 tool=c("kallisto", "stringtie", "cufflinks", "rsem", "salmon"), 
+                                 features_annotation,
+                                 samples_annotation) {
+      library(Biobase)
+      library(readr)
+      library(tximport)
+      
+      load(features_annotation)
+      tx2gene <- as.data.frame(cbind("transcript"=toil.transcripts$transcript_id, "gene"=toil.transcripts$gene_id))
+      
+      files <- list.files(dir, recursive = TRUE, full.names = T)
+      resFiles <- grep("abundance.h5", files)
+      resFiles <- files[resFiles]
+      length(resFiles)
+      names(resFiles) <- basename(dirname(resFiles))
+      
+      txi <- tximport(resFiles, type="kallisto", tx2gene=tx2gene)
+      head(txi$counts[,1:5])
+      dim(txi$counts)
+      
+      xx <- txi$abundance
+      gene.exp <- Biobase::ExpressionSet(log2(xx + 0.001))
+      fData(gene.exp) <- toil.genes[featureNames(gene.exp),]
+      pData(gene.exp) <- samples_annotation[sampleNames(gene.exp),]
+      annotation(gene.exp) <- "rnaseq"
+      
+      xx <- txi$counts
+      gene.count <- Biobase::ExpressionSet(log2(xx + 1))
+      fData(gene.count) <- toil.genes[featureNames(gene.count),]
+      pData(gene.count) <- samples_annotation[sampleNames(gene.count),]
+      annotation(gene.count) <- "rnaseq"
+      
+      txii <- tximport(resFiles, type="kallisto", txOut=T)
+      
+      xx <- txii$abundance
+      transcript.exp <- Biobase::ExpressionSet(log2(xx[,1:length(resFiles)] + 0.001))
+      fData(transcript.exp) <- toil.transcripts[featureNames(transcript.exp),]
+      pData(transcript.exp) <- samples_annotation[sampleNames(transcript.exp),]
+      annotation(transcript.exp) <- "isoforms"
+      
+      xx <- txii$counts
+      transcript.count <- Biobase::ExpressionSet(log2(xx[,1:length(resFiles)] + 1))
+      fData(transcript.count) <- toil.transcripts[featureNames(transcript.count),]
+      pData(transcript.count) <- samples_annotation[sampleNames(transcript.count),]
+      annotation(transcript.count) <- "isoforms"
+      
+      return(list("rnaseq"=gene.exp, 
+                  "rnaseq.counts"=gene.count, 
+                  "isoforms"=transcript.exp, 
+                  "isoforms.counts"=transcript.count))
+    }
+
+
+rnaseq.sampleinfo <- read.csv("/pfs/downAnnotations/E-MTAB-3983.sdrf.txt", sep="\t")
+rownames(rnaseq.sampleinfo) <- rnaseq.sampleinfo$Comment.EGA_RUN.
+rnaseq.sampleinfo$cellid <- as.character(matchToIDTable(ids=rnaseq.sampleinfo$Source.Name, tbl=curationCell, column = "GDSC_rnaseq.cellid", returnColumn = "unique.cellid"))
+rnaseq.sampleinfo <- rnaseq.sampleinfo[,c("cellid","Characteristics.organism.part.","Characteristics.disease.","Characteristics.sex.","Scan.Name","Comment.EGA_RUN.")]
+   
+rnaseq <- summarizeRnaSeq(dir="/pfs/downloadgdscrnaseq/KallistoGDSC_hg38/KallistoGDSC_hg38", 
+                                tool="kallisto", 
+                                features_annotation="/pfs/downAnnotations/Gencode.v23.annotation.RData",
+                                samples_annotation=rnaseq.sampleinfo)
+
+
+
+message("Compile All GDSC Mutation Data")
+
+#need to install reshape2 in docker image
+#mutation_raw <- read.csv("/pfs/gdscmutation_all/mutations_latest.csv", na.strings=c("", " ", "NA"))
+#mutation_raw <- mutation_raw[,c("gene_symbol","protein_mutation","model_name")]
+#filter for cancer driver genes only
+#mutation_raw <- mutation_raw[which(mutation_raw$cancer_driver=="True"),]
+#cells_matched <- as.character(matchToIDTable(ids = mutation_raw[,3], tbl = curationCell, column = "GDSC1000.cellid", returnColumn = "unique.cellid"))
+#mutation_raw[,3] <- cells_matched
+#mutation_raw$cancer_driver <- NULL
+#concatenate cases where one cell line maps to the same gene twice ("///")
+#xx <- mutation_raw %>% group_by(gene_symbol, model_name) %>% 
+#      mutate(protein_mutation = paste(protein_mutation, collapse="///"))
+
+#xx_df <- data.frame(xx)
+
+#removes duplicated concatenation
+#xx_df_2 <- distinct(xx_df,gene_symbol, model_name,.keep_all = TRUE)
+
+#flatten data frame to gene name x cell line matrix
+#matrix_final <- reshape2::acast(xx_df_2, gene_symbol ~ model_name, value.var = "protein_mutation") #cannot complete due to issue with docker image
+#matrix_final[which(is.na(matrix_final))] <- "wt"
+
+
+#### Loading ALL exome data ####
+load("/pfs/gdscmutation_all/GDSC_mutation_matrix.RData")
+
+geneMap <- read.csv("/pfs/downAnnotations/annot_ensembl_all_genes.csv")
+geneInfoM <- geneMap[na.omit(match(rownames(matrix_final),geneMap[ , "gene_name"])), c('gene_biotype','gene_name','EntrezGene.ID')] 
+rownames(geneInfoM) <- geneInfoM[ , "gene_name"] 
+missing_genes <- rownames(matrix_final)[which(!rownames(matrix_final) %in% geneMap$gene_name)]
+geneInfoM[nrow(geneInfoM)+ length(missing_genes),] <- NA
+rownames(geneInfoM)[268:278] <- missing_genes
+
+geneInfoM <- geneInfoM[rownames(matrix_final),] 
+
+MutationAll <- Biobase::ExpressionSet(matrix_final)
+tttt <- data.frame(row.names=colnames(MutationAll), colnames(MutationAll))
+colnames(tttt) <- 'cellid'
+pData(MutationAll) <- tttt
+fData(MutationAll) <- geneInfoM 
+annotation(MutationAll) <- "mutation"
+pData(MutationAll)[, "batchid"] <- NA
+
+
+
 cellnall <- unionList(rownames(cell.info), 
 					  cnv.cellid, 
 					  rna.cellid, 
-					  mut.cellid)
+					  mut.cellid,
+		     			  rnaseq$cellid,
+		     			  MutationAll$cellid)
 newcells <- setdiff(cellnall, rownames(cell.info))
 newRows <- matrix(NA_character_, nrow=length(newcells), ncol=ncol(cell.info))
 # newRows <- cell.info[newcells,]
@@ -276,116 +394,6 @@ drugsPresent <- sort(unique(sens.info$drugid))
 
 drug.info <- drug.info[drugsPresent,]
 
-
-message("Summarizing Processed RNAseq")
-
-summarizeRnaSeq <- function (dir, 
-                                 tool=c("kallisto", "stringtie", "cufflinks", "rsem", "salmon"), 
-                                 features_annotation,
-                                 samples_annotation) {
-      library(Biobase)
-      library(readr)
-      library(tximport)
-      
-      load(features_annotation)
-      tx2gene <- as.data.frame(cbind("transcript"=toil.transcripts$transcript_id, "gene"=toil.transcripts$gene_id))
-      
-      files <- list.files(dir, recursive = TRUE, full.names = T)
-      resFiles <- grep("abundance.h5", files)
-      resFiles <- files[resFiles]
-      length(resFiles)
-      names(resFiles) <- basename(dirname(resFiles))
-      
-      txi <- tximport(resFiles, type="kallisto", tx2gene=tx2gene)
-      head(txi$counts[,1:5])
-      dim(txi$counts)
-      
-      xx <- txi$abundance
-      gene.exp <- Biobase::ExpressionSet(log2(xx + 0.001))
-      fData(gene.exp) <- toil.genes[featureNames(gene.exp),]
-      pData(gene.exp) <- samples_annotation[sampleNames(gene.exp),]
-      annotation(gene.exp) <- "rnaseq"
-      
-      xx <- txi$counts
-      gene.count <- Biobase::ExpressionSet(log2(xx + 1))
-      fData(gene.count) <- toil.genes[featureNames(gene.count),]
-      pData(gene.count) <- samples_annotation[sampleNames(gene.count),]
-      annotation(gene.count) <- "rnaseq"
-      
-      txii <- tximport(resFiles, type="kallisto", txOut=T)
-      
-      xx <- txii$abundance
-      transcript.exp <- Biobase::ExpressionSet(log2(xx[,1:length(resFiles)] + 0.001))
-      fData(transcript.exp) <- toil.transcripts[featureNames(transcript.exp),]
-      pData(transcript.exp) <- samples_annotation[sampleNames(transcript.exp),]
-      annotation(transcript.exp) <- "isoforms"
-      
-      xx <- txii$counts
-      transcript.count <- Biobase::ExpressionSet(log2(xx[,1:length(resFiles)] + 1))
-      fData(transcript.count) <- toil.transcripts[featureNames(transcript.count),]
-      pData(transcript.count) <- samples_annotation[sampleNames(transcript.count),]
-      annotation(transcript.count) <- "isoforms"
-      
-      return(list("rnaseq"=gene.exp, 
-                  "rnaseq.counts"=gene.count, 
-                  "isoforms"=transcript.exp, 
-                  "isoforms.counts"=transcript.count))
-    }
-
-
-rnaseq.sampleinfo <- read.csv("/pfs/downAnnotations/E-MTAB-3983.sdrf.txt", sep="\t")
-rownames(rnaseq.sampleinfo) <- rnaseq.sampleinfo$Comment.EGA_RUN.
-rnaseq.sampleinfo$cellid <- as.character(matchToIDTable(ids=rnaseq.sampleinfo$Source.Name, tbl=curationCell, column = "GDSC_rnaseq.cellid", returnColumn = "unique.cellid"))
-rnaseq.sampleinfo <- rnaseq.sampleinfo[,c("cellid","Characteristics.organism.part.","Characteristics.disease.","Characteristics.sex.","Scan.Name","Comment.EGA_RUN.")]
-   
-rnaseq <- summarizeRnaSeq(dir="/pfs/downloadgdscrnaseq/KallistoGDSC_hg38/KallistoGDSC_hg38", 
-                                tool="kallisto", 
-                                features_annotation="/pfs/downAnnotations/Gencode.v23.annotation.RData",
-                                samples_annotation=rnaseq.sampleinfo)
-
-
-
-message("Compile All GDSC Mutation Data")
-
-#need to install reshape2 in docker image
-#mutation_raw <- read.csv("/pfs/gdscmutation_all/mutations_latest.csv", na.strings=c("", " ", "NA"))
-#mutation_raw <- mutation_raw[,c("gene_symbol","protein_mutation","model_name")]
-#filter for cancer driver genes only
-#mutation_raw <- mutation_raw[which(mutation_raw$cancer_driver=="True"),]
-#cells_matched <- as.character(matchToIDTable(ids = mutation_raw[,3], tbl = curationCell, column = "GDSC1000.cellid", returnColumn = "unique.cellid"))
-#mutation_raw[,3] <- cells_matched
-#mutation_raw$cancer_driver <- NULL
-#concatenate cases where one cell line maps to the same gene twice ("///")
-#xx <- mutation_raw %>% group_by(gene_symbol, model_name) %>% 
-#      mutate(protein_mutation = paste(protein_mutation, collapse="///"))
-
-#xx_df <- data.frame(xx)
-
-#removes duplicated concatenation
-#xx_df_2 <- distinct(xx_df,gene_symbol, model_name,.keep_all = TRUE)
-
-#flatten data frame to gene name x cell line matrix
-#matrix_final <- reshape2::acast(xx_df_2, gene_symbol ~ model_name, value.var = "protein_mutation") #cannot complete due to issue with docker image
-#matrix_final[which(is.na(matrix_final))] <- "wt"
-
-load("/pfs/gdscmutation_all/GDSC_mutation_matrix.RData")
-
-geneMap <- read.csv("/pfs/downAnnotations/annot_ensembl_all_genes.csv")
-geneInfoM <- geneMap[na.omit(match(rownames(matrix_final),geneMap[ , "gene_name"])), c('gene_biotype','gene_name','EntrezGene.ID')] 
-rownames(geneInfoM) <- geneInfoM[ , "gene_name"] 
-missing_genes <- rownames(matrix_final)[which(!rownames(matrix_final) %in% geneMap$gene_name)]
-geneInfoM[nrow(geneInfoM)+ length(missing_genes),] <- NA
-rownames(geneInfoM)[268:278] <- missing_genes
-
-geneInfoM <- geneInfoM[rownames(matrix_final),] 
-
-MutationAll <- Biobase::ExpressionSet(matrix_final)
-tttt <- data.frame(row.names=colnames(MutationAll), colnames(MutationAll))
-colnames(tttt) <- 'cellid'
-pData(MutationAll) <- tttt
-fData(MutationAll) <- geneInfoM 
-annotation(MutationAll) <- "mutation"
-pData(MutationAll)[, "batchid"] <- NA
 
 
 message("Making PSet")
