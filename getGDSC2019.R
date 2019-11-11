@@ -269,8 +269,9 @@ geneMap <- read.csv("/pfs/downAnnotations/annot_ensembl_all_genes.csv")
 geneInfoM <- geneMap[na.omit(match(rownames(matrix_final),geneMap[ , "gene_name"])), c('gene_biotype','gene_name','EntrezGene.ID')] 
 rownames(geneInfoM) <- geneInfoM[ , "gene_name"] 
 missing_genes <- rownames(matrix_final)[which(!rownames(matrix_final) %in% geneMap$gene_name)]
+all_genes <- c(rownames(geneInfoM), missing_genes)
 geneInfoM[nrow(geneInfoM)+ length(missing_genes),] <- NA
-rownames(geneInfoM)[268:278] <- missing_genes
+rownames(geneInfoM) <- all_genes
 
 geneInfoM <- geneInfoM[rownames(matrix_final),] 
 
