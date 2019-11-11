@@ -75,7 +75,7 @@ message("Loading CNA Data")
 
 
 
-load(file.path(myDirPrefix, "gdscCNA/GDSC_eset.Rdata"))
+load(file.path(myDirPrefix, "gdscCNA/GDSC_eset.RData"))
 
 cl.eset$GDSC.cellid <- as.character(cl.eset$GDSC.cellid)
 
