@@ -71,6 +71,7 @@ cell.all <- read.csv(file.path(myDirPrefix, "downAnnotations/cell_annotation_all
 
 rna.cellid <- matchToIDTable(ids=phenoData(cgp.u219.ensg)$Characteristics.cell.line., tbl=cell.all, column = "CGP_EMTAB3610.cellid", returnColumn="unique.cellid")
 
+
 message("Loading CNA Data")
 
 
@@ -227,7 +228,7 @@ summarizeRnaSeq <- function (dir,
 
 rnaseq.sampleinfo <- read.csv("/pfs/downAnnotations/E-MTAB-3983.sdrf.txt", sep="\t")
 rownames(rnaseq.sampleinfo) <- rnaseq.sampleinfo$Comment.EGA_RUN.
-rnaseq.sampleinfo$cellid <- as.character(matchToIDTable(ids=rnaseq.sampleinfo$Source.Name, tbl=curationCell, column = "GDSC_rnaseq.cellid", returnColumn = "unique.cellid"))
+rnaseq.sampleinfo$cellid <- matchToIDTable(ids=rnaseq.sampleinfo$Source.Name, tbl=cell.all, column = "GDSC_rnaseq.cellid", returnColumn = "unique.cellid")
 rnaseq.sampleinfo <- rnaseq.sampleinfo[,c("cellid","Characteristics.organism.part.","Characteristics.disease.","Characteristics.sex.","Scan.Name","Comment.EGA_RUN.")]
    
 rnaseq <- summarizeRnaSeq(dir="/pfs/downloadgdscrnaseq/KallistoGDSC_hg38/KallistoGDSC_hg38", 
