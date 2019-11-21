@@ -72,25 +72,26 @@ cell.all <- read.csv(file.path(myDirPrefix, "downAnnotations/cell_annotation_all
 rna.cellid <- matchToIDTable(ids=phenoData(cgp.u219.ensg)$Characteristics.cell.line., tbl=cell.all, column = "CGP_EMTAB3610.cellid", returnColumn="unique.cellid")
 
 
-message("Loading CNA Data")
+message("Loading CNV Data")
 
 
+#load(file.path(myDirPrefix, "gdscCNA/GDSC_eset.RData"))
+cl.eset <- readRDS("/pfs/gdsc_cnv_new/GDSC_CN.gene.RDS")
 
-load(file.path(myDirPrefix, "gdscCNA/GDSC_eset.RData"))
+cl.eset$GDSC.cellid <- as.character(cl.eset$`Sample Name`)
+cnv.cellid <- as.character(matchToIDTable(ids=cl.eset$GDSC.cellid, tbl=cell_all, column="GDSC.SNP.cellid", returnColumn = "unique.cellid"))
 
-cl.eset$GDSC.cellid <- as.character(cl.eset$GDSC.cellid)
 
+#myx <- which(is.na(cl.eset$GDSC.cellid))
 
-myx <- which(is.na(cl.eset$GDSC.cellid))
+#toRep <- cl.eset$GDSC.cellid
+#toRep[myx] <- sapply(strsplit(rownames(phenoData(cl.eset))[myx], split="_"), `[`, 1)
 
-toRep <- cl.eset$GDSC.cellid
-toRep[myx] <- sapply(strsplit(rownames(phenoData(cl.eset))[myx], split="_"), `[`, 1)
-
-cl.eset$GDSC.cellid <- toRep
+#cl.eset$GDSC.cellid <- toRep
 
 # phenoData(cl.eset)[myx,"GDSC.cellid"] <- sapply(strsplit(rownames(phenoData(cl.eset))[myx], split="_"), `[`, 1)
 
-cnv.cellid <- matchToIDTable(ids=cl.eset$GDSC.cellid, tbl=cell.all, column="GDSC.SNP.cellid", returnColumn = "unique.cellid")
+#cnv.cellid <- matchToIDTable(ids=cl.eset$GDSC.cellid, tbl=cell.all, column="GDSC.SNP.cellid", returnColumn = "unique.cellid")
 
 message("Loading Mutation/fusion Data")
 
@@ -372,6 +373,7 @@ rownames(fData(gdsc.u219.ensg)) <- rownames(exprs(gdsc.u219.ensg))
 pData(gdsc.u219.ensg)[,"batchid"] <- NA
 pData(gdsc.u219.ensg)[,"cellid"] <- rna.cellid
 
+#Compile CNV data
 
 tt <- rownames(pData(cl.eset))
 pData(cl.eset) <- as.data.frame(apply(pData(cl.eset), MARGIN=2, as.character), stringsAsFactors=FALSE)
