@@ -34,7 +34,7 @@ switch(version, v1 = {
 	myOutFile <- "GDSC_v2.RData"
 	myInPrefix <- "gdscv2"
   sensFolder <- "GDSC2019v2Normalize"
-  profFolder <- "gdscProfilesV2"
+  profFolder <- "gdscprofilesV2"
 
 	})
 
