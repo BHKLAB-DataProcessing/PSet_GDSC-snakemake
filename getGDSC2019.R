@@ -79,7 +79,7 @@ message("Loading CNV Data")
 cl.eset <- readRDS("/pfs/gdsc_cnv_new/GDSC_CN.gene.RDS")
 
 cl.eset$GDSC.cellid <- as.character(cl.eset$`Sample Name`)
-cnv.cellid <- as.character(matchToIDTable(ids=cl.eset$GDSC.cellid, tbl=cell_all, column="GDSC.SNP.cellid", returnColumn = "unique.cellid"))
+cnv.cellid <- as.character(matchToIDTable(ids=cl.eset$GDSC.cellid, tbl=cell.all, column="GDSC.SNP.cellid", returnColumn = "unique.cellid"))
 
 
 #myx <- which(is.na(cl.eset$GDSC.cellid))
