@@ -390,7 +390,9 @@ cellsPresent <- sort(unionList(sens.info$cellid,
 					  pData(gdsc.u219.ensg)$cellid, 
 					  pData(MutationEset)$cellid,
 					  pData(FusionEset)$cellid,
-					  pData(cl.eset)$cellid))
+					  pData(cl.eset)$cellid,
+		    			  pData(rnaseq)$cellid,
+			      		  pData(MutationAll)$cellid))
 cell.info <- cell.info[cellsPresent,]
 
 drugsPresent <- sort(unique(sens.info$drugid))
