@@ -4,6 +4,8 @@ library(PharmacoGx)
 # library(PharmacoGxPrivate)
 library(data.table)
 library(Biobase)
+library(reshape2)
+library(dplyr)
 options(stringsAsFactors=FALSE)
 
 myDirPrefix <- "/pfs"
@@ -241,30 +243,27 @@ rnaseq <- summarizeRnaSeq(dir="/pfs/downloadgdscrnaseq/KallistoGDSC_hg38/Kallist
 
 message("Compile All GDSC Mutation Data")
 
-#need to install reshape2 in docker image
-#mutation_raw <- read.csv("/pfs/gdscmutation_all/mutations_latest.csv", na.strings=c("", " ", "NA"))
-#mutation_raw <- mutation_raw[,c("gene_symbol","protein_mutation","model_name")]
-#filter for cancer driver genes only
-#mutation_raw <- mutation_raw[which(mutation_raw$cancer_driver=="True"),]
-#cells_matched <- as.character(matchToIDTable(ids = mutation_raw[,3], tbl = curationCell, column = "GDSC1000.cellid", returnColumn = "unique.cellid"))
-#mutation_raw[,3] <- cells_matched
-#mutation_raw$cancer_driver <- NULL
-#concatenate cases where one cell line maps to the same gene twice ("///")
-#xx <- mutation_raw %>% group_by(gene_symbol, model_name) %>% 
-#      mutate(protein_mutation = paste(protein_mutation, collapse="///"))
+######### Loading ALL exome data #########
+mutation_raw <- read.csv("/pfs/gdscmutation_all/mutations_latest.csv", na.strings=c("", " ", "NA"))
+mutation_raw <- mutation_raw[,c("gene_symbol","protein_mutation","model_name","cancer_driver")]
+mutation_raw <- mutation_raw[which(mutation_raw$cancer_driver=="True"),]
+cells_matched <- matchToIDTable(ids = mutation_raw[,3], tbl = cell.all, column = "GDSC.SNP.cellid", returnColumn = "unique.cellid")
+mutation_raw[,3] <- as.character(cells_matched)
+mutation_raw$cancer_driver <- NULL
 
-#xx_df <- data.frame(xx)
+#concatenate cases where one cell line maps to the same gene twice ("///")
+xx <- mutation_raw %>% group_by(gene_symbol, model_name) %>% 
+  mutate(protein_mutation = paste(protein_mutation, collapse="///"))
+
+xx_df <- data.frame(xx)
 
 #removes duplicated concatenation
-#xx_df_2 <- distinct(xx_df,gene_symbol, model_name,.keep_all = TRUE)
+xx_df_2 <- distinct(xx_df,gene_symbol, model_name,.keep_all = TRUE)
 
 #flatten data frame to gene name x cell line matrix
-#matrix_final <- reshape2::acast(xx_df_2, gene_symbol ~ model_name, value.var = "protein_mutation") #cannot complete due to issue with docker image
-#matrix_final[which(is.na(matrix_final))] <- "wt"
+matrix_final <- reshape2::acast(xx_df_2, gene_symbol ~ model_name, value.var = "protein_mutation")
+matrix_final[which(is.na(matrix_final))] <- "wt"
 
-
-#### Loading ALL exome data ####
-load("/pfs/gdscmutation_all/GDSC_mutation_matrix.RData")
 
 geneMap <- read.csv("/pfs/downAnnotations/annot_ensembl_all_genes.csv")
 geneInfoM <- geneMap[na.omit(match(rownames(matrix_final),geneMap[ , "gene_name"])), c('gene_biotype','gene_name','EntrezGene.ID')] 
