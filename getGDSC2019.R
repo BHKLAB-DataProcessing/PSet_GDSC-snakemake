@@ -399,6 +399,14 @@ drugsPresent <- sort(unique(sens.info$drugid))
 drug.info <- drug.info[drugsPresent,]
 
 
+drug_all <- read.csv("/pfs/downAnnotations/drugs_with_ids.csv", na.strings=c("", " ", "NA"))
+drug_all <- drug_all[which(!is.na(drug_all[ , "GDSC2019.drugid"])),]
+drug_all <- drug_all[ , c("unique.drugid", "GDSC2019.drugid","smiles","inchikey","cid","FDA")]
+rownames(drug_all) <- drug_all[ , "unique.drugid"]
+
+drug_all <- drug_all[rownames(drug.info),]
+drug.info[,c("smiles","inchikey","cid","FDA")] <- drug_all[,c("smiles","inchikey","cid","FDA")]
+
 
 message("Making PSet")
 
