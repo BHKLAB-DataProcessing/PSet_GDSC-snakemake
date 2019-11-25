@@ -289,7 +289,7 @@ cellnall <- unionList(rownames(cell.info),
 					  cnv.cellid, 
 					  rna.cellid, 
 					  mut.cellid,
-		     			  rnaseq$cellid,
+		     			  rnaseq$rnaseq$cellid,
 		     			  MutationAll$cellid)
 newcells <- setdiff(cellnall, rownames(cell.info))
 newRows <- matrix(NA_character_, nrow=length(newcells), ncol=ncol(cell.info))
@@ -391,7 +391,7 @@ cellsPresent <- sort(unionList(sens.info$cellid,
 					  pData(MutationEset)$cellid,
 					  pData(FusionEset)$cellid,
 					  pData(cl.eset)$cellid,
-		    			  rnaseq$cellid,
+		    			  rnaseq$rnaseq$cellid,
 			      		  MutationAll$cellid))
 cell.info <- cell.info[cellsPresent,]
 
