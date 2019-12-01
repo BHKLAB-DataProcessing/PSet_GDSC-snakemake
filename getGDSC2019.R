@@ -122,17 +122,19 @@ MutationEset <- ExpressionSet(t(mutation))
 
 colnames(MutationEset) <- mut.cellid
 
-annot <- read.csv("/pfs/downAnnotations/annot_ensembl_all_genes.csv", stringsAsFactors=FALSE, check.names=FALSE, header=TRUE, row.names=1)
-tt <- rownames(pData(MutationEset))
-pData(MutationEset) <- as.data.frame(apply(pData(MutationEset), MARGIN=2, as.character), stringsAsFactors=FALSE)
-rownames(pData(MutationEset)) <- tt
-pData(MutationEset)[,"batchid"] <- NA
-pData(MutationEset)[,"cellid"] <- mut.cellid
-tt <- annot[match(rownames(fData(MutationEset)), annot$gene_name), c("gene_id", "EntrezGene.ID", "gene_name", "gene_biotype")]
-rownames(tt) <- rownames(fData(MutationEset))
-colnames(tt) <- c("EnsemblGeneId", "EntrezGeneId", "Symbol", "GeneBioType")
-fData(MutationEset) <- tt
+geneMap <- read.csv(file.path(myDirPrefix, "downAnnotations/annot_ensembl_all_genes.csv"))
+geneInfoM <- geneMap[na.omit(match(rownames(MutationEset),geneMap[ , "gene_name"]) ), c("gene_id", "EntrezGene.ID", "gene_name", "gene_biotype")] 
+rownames(geneInfoM) <- geneInfoM[ , "gene_name"]     
+geneInfoM <- geneInfoM[rownames(MutationEset),]
+colnames(geneInfoM) <- c("EnsemblGeneId", "EntrezGeneId", "Symbol", "GeneBioType")
+rownames(geneInfoM) <- rownames(MutationEset)
+fData(MutationEset) <- geneInfoM 
+tttt <- data.frame(row.names=colnames(MutationEset), colnames(MutationEset))
+colnames(tttt) <- 'cellid'
+pData(MutationEset) <- tttt
+pData(MutationEset)[, "batchid"] <- NA
 annotation(MutationEset) <- "mutation"
+
 
 
 rangefus <- which(colnames(mut.matrix) == "BCR_ABL"):which(colnames(mut.matrix) == "MLL_AFF1")
