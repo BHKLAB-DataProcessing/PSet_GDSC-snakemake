@@ -11,11 +11,26 @@ library(reshape2)
 
 options(stringsAsFactors=FALSE)
 
-myDirPrefix <- "/pfs"
-
+myDirPrefix <- "/pfs/"
 args = commandArgs(trailingOnly=TRUE)
+rnaseq_select <- args
+print(rnaseq_select)
+rnaseq_results <- list()
+ORCESTRA_ID = tail(rnaseq_select, n=1)
 
-version <- args[[1]]
+	  
+tools <- grep(pattern = 'Kallisto|Salmon', x = rnaseq_select)
+tools <- rnaseq_select[tools]
+tools <- gsub("-", "_", tools)
+transcriptome <- grep(pattern = 'Gencode|Ensembl', x = rnaseq_select)
+transcriptome <- rnaseq_select[transcriptome]
+tool_path = expand.grid(a = tools,b = transcriptome)
+tool_path = paste0(tool_path$a, "_",tool_path$b)
+	  
+print(tool_path)
+
+version <- tail(args, n=2)[1]
+print(version)
 
 matchToIDTable <- function(ids,tbl, column, returnColumn="unique.cellid") {
 	sapply(ids, function(x) {
@@ -237,12 +252,37 @@ rownames(rnaseq.sampleinfo) <- rnaseq.sampleinfo$Comment.EGA_RUN.
 rnaseq.sampleinfo$cellid <- matchToIDTable(ids=rnaseq.sampleinfo$Source.Name, tbl=cell.all, column = "GDSC_rnaseq.cellid", returnColumn = "unique.cellid")
 rnaseq.sampleinfo <- rnaseq.sampleinfo[,c("cellid","Characteristics.organism.part.","Characteristics.disease.","Characteristics.sex.","Scan.Name","Comment.EGA_RUN.")]
    
-rnaseq <- summarizeRnaSeq(dir="/pfs/downloadgdscrnaseq/KallistoGDSC_hg38/KallistoGDSC_hg38", 
-                                tool="kallisto", 
-                                features_annotation="/pfs/downAnnotations/Gencode.v23.annotation.RData",
-                                samples_annotation=rnaseq.sampleinfo)
-
-
+for (r in 1:length(tool_path)){
+  print(tool_path[r])
+  if (length(grep(pattern = 'Kallisto', x = tool_path[r])) > 0){
+    tdir = "download_gray_rnaseqkallisto/Kallisto/"
+    tool <- sub("(_[^_]+)_.*", "\\1", tool_path[r])	  
+    rnatool="kallisto"	  
+  } else {
+    tdir = "download_gray_rnaseqsalmon/Salmon/"
+    tool <- sub("(_[^_]+)_.*", "\\1", tool_path[r])
+    rnatool="salmon"	  
+  }
+  
+  
+  if (length(grep(pattern = 'lift37', x = tool_path[r])) > 0){
+    annot = "/pfs/downAnnotations/Gencode.v33lift37.annotation.RData"
+  } else if (length(grep(pattern = 'v33', x = tool_path[r])) > 0){
+    annot = "/pfs/downAnnotations/Gencode.v33.annotation.RData"
+  } else {
+    annot = "/pfs/downAnnotations/Ensembl.v99.annotation.RData"
+  }
+    print(annot)
+  
+  rnaseq <- summarizeRnaSeq(dir=file.path(paste0(myDirPrefix, tdir, tool_path[r])),
+                            features_annotation=annot,
+                            samples_annotation=rnaseq.sampleinfo,
+			    method = rnatool)
+  rnaseq_results <- c(rnaseq_results,c(
+    rnaseq <- setNames(rnaseq,  paste0(tool,".", names(rnaseq)))
+  )
+  )
+}
 
 message("Compile All GDSC Mutation Data")
 
