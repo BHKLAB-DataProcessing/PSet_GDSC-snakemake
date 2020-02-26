@@ -671,7 +671,7 @@ GDSC@sensitivity$profiles[noisy_out$noisy, ] <- NA
 		 
 
 
-save(GDSC, file=paste0("/pfs/out/GDSC", version, ".RData"), version=2)
+#save(GDSC, file=paste0("/pfs/out/GDSC", version, ".RData"), version=2)
 saveRDS(GDSC, file=paste0("/pfs/out/GDSC", version, ".rds"), version=2)
 
 
