@@ -255,8 +255,8 @@ rnaseq.sampleinfo <- rnaseq.sampleinfo[,c("cellid","Characteristics.organism.par
 for (r in 1:length(tool_path)){
   print(tool_path[r])
   if (length(grep(pattern = 'Kallisto', x = tool_path[r])) > 0){
-    tdir = "download_gray_rnaseqkallisto/Kallisto/"
-    tool <- sub("(_[^_]+)_.*", "\\1", tool_path[r])	  
+    tool <- sub("(_[^_]+)_.*", "\\1", tool_path[r])
+    tdir = paste0("gdsc_rnaseq_",gsub(".","_",tolower(tool), fixed = T), "/",  tool, "/", tool, "/")	  
     rnatool="kallisto"	  
   } else {
     tdir = "download_gray_rnaseqsalmon/Salmon/"
