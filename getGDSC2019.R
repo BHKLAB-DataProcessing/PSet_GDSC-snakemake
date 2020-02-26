@@ -10,6 +10,7 @@ library(data.table)
 library(reshape2)
 
 options(stringsAsFactors=FALSE)
+print("Retrieving selection")
 
 myDirPrefix <- "/pfs"
 args = commandArgs(trailingOnly=TRUE)
