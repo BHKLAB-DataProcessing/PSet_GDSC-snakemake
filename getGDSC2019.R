@@ -11,7 +11,7 @@ library(reshape2)
 
 options(stringsAsFactors=FALSE)
 
-myDirPrefix <- "/pfs/"
+myDirPrefix <- "/pfs"
 args = commandArgs(trailingOnly=TRUE)
 rnaseq_select <- args
 print(rnaseq_select)
@@ -305,7 +305,8 @@ for (r in 1:length(tool_path)){
   }
     print(annot)
   
-  rnaseq <- summarizeRnaSeq(dir=file.path(paste0(myDirPrefix, tdir, tool_path[r])),
+ 
+  rnaseq <- summarizeRnaSeq(dir=file.path(paste0("/pfs/", tdir, tool_path[r])),
                             features_annotation=annot,
                             samples_annotation=rnaseq.sampleinfo,
 			    method = rnatool)
