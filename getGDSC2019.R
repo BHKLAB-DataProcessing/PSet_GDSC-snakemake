@@ -579,11 +579,21 @@ standardizeRawDataConcRange <- function(sens.info, sens.raw){
     return(list("sens.info" = sens.info, sens.raw = sens.raw))
 }
 		 
-		 
+z <- list()
+
+z <- c(z,c(
+  rnaseq_results,
+  "rna"=gdsc.u219.ensg, 
+  "mutation"=MutationEset, 
+  "mutation_exome"=MutationAll,
+  "fusion"=FusionEset, 
+  "cnv"=cl.eset
+  )
+)		 
 		 
 standardize <- standardizeRawDataConcRange(sens.info = sens.info, sens.raw = sens.raw)
 
-GDSC <- PharmacoSet(molecularProfiles=list("rna"=gdsc.u219.ensg, "mutation"=MutationEset, "mutation_exome"=MutationAll ,"fusion"=FusionEset, "cnv"=cl.eset, "rnaseq"=rnaseq$rnaseq, "rnaseq.counts"=rnaseq$rnaseq.counts, "isoforms"=rnaseq$isoforms, "isoforms.counts"=rnaseq$isoforms.counts),
+GDSC <- PharmacoSet(molecularProfiles=z,
                       name=paste("GDSC", version, sep="_"), 
                       cell=cell.info, 
                       drug=drug.info, 
