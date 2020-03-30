@@ -59,6 +59,8 @@ switch(version, v1 = {
 
 	})
 
+cell_all <- read.csv(file.path(dir.prefix, "downAnnotations/cell_annotation_all.csv"), na.strings=c("", " ", "NA"))
+
 message("Loading Sensitivity Data")
 
 sens.info <- readRDS(file=file.path(myDirPrefix, sensFolder, paste0(myInPrefix, "_sens_info.rds")))
