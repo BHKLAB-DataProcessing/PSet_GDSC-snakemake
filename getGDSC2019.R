@@ -590,6 +590,11 @@ z <- c(z,c(
   "cnv"=cl.eset
   )
 )		 
+
+		 
+#add cellosaurus disease type to cell-info
+disease <- cell_all$Cellosaurus.Disease.Type[match(cell.info$cellid, cell_all$unique.cellid)]
+cell.info$Cellosaurus.Disease.Type <- disease		 
 		 
 standardize <- standardizeRawDataConcRange(sens.info = sens.info, sens.raw = sens.raw)
 
