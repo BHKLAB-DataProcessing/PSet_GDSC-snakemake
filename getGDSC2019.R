@@ -595,6 +595,7 @@ z <- c(z,c(
 
 		 
 #add cellosaurus disease type to cell-info
+colnames(cell.info)[which(names(cell.info) == "unique.cellid")] <- "cellid"
 disease <- cell_all$Cellosaurus.Disease.Type[match(cell.info$cellid, cell_all$unique.cellid)]
 cell.info$Cellosaurus.Disease.Type <- disease		 
 		 
