@@ -474,6 +474,7 @@ cellsPresent <- sort(unionList(sens.info$cellid,
 		    			  rnaseq$rnaseq$cellid,
 			      		  MutationAll$cellid))
 cell.info <- cell.info[cellsPresent,]
+cell.info$tissueid <- curationTissue[rownames(cell.info), "unique.tissueid"]
 
 drugsPresent <- sort(unique(sens.info$drugid))
 
