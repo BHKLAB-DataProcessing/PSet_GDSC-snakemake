@@ -281,20 +281,21 @@ summarizeRnaSeq <- function (dir,
               "isoforms.counts"=transcript.count))
 }
 
-rnaseq.sampleinfo <- read.csv("/pfs/downAnnotations/E-MTAB-3983.sdrf.txt", sep="\t")
+rnaseq.sampleinfo <- read.csv("/pfs/downAnnotations/GDSC_rnaseq_meta.txt", sep="\t")
+rnaseq.sampleinfo <- rnaseq.sampleinfo[which(!rnaseq.sampleinfo$Comment.SUBMITTED_FILE_NAME. == "15552_5.cram"),]
 rownames(rnaseq.sampleinfo) <- rnaseq.sampleinfo$Comment.EGA_RUN.
 rnaseq.sampleinfo$cellid <- matchToIDTable(ids=rnaseq.sampleinfo$Source.Name, tbl=cell.all, column = "GDSC_rnaseq.cellid", returnColumn = "unique.cellid")
-rnaseq.sampleinfo <- rnaseq.sampleinfo[,c("cellid","Characteristics.organism.part.","Characteristics.disease.","Characteristics.sex.","Scan.Name","Comment.EGA_RUN.")]
+#rnaseq.sampleinfo <- rnaseq.sampleinfo[,c("cellid","Characteristics.organism.part.","Characteristics.disease.","Characteristics.sex.","Scan.Name","Comment.EGA_RUN.")]
    
 for (r in 1:length(tool_path)){
   print(tool_path[r])
   if (length(grep(pattern = 'Kallisto', x = tool_path[r])) > 0){
     tool <- sub("(_[^_]+)_.*", "\\1", tool_path[r])
-    tdir = paste0("gdsc_rnaseq_",gsub(".","_",tolower(tool), fixed = T), "/",  tool, "/", tool, "/")	  
+    tdir = paste0("gdsc_rnaseq_",gsub(".","_",tolower(tool), fixed = T), "/",  tool, "/", tool, "/")  
     rnatool="kallisto"	  
   } else {
-    tdir = "download_gray_rnaseqsalmon/Salmon/"
     tool <- sub("(_[^_]+)_.*", "\\1", tool_path[r])
+    tdir = paste0("gdsc_rnaseq_",gsub(".","_",tolower(tool), fixed = T), "/",  tool, "/", tool, "/")
     rnatool="salmon"	  
   }
   
