@@ -364,12 +364,12 @@ annotation(MutationAll) <- "mutation"
 pData(MutationAll)[, "batchid"] <- NA
 
 
-
+rnaseq_cellid_all <- pData(rnaseq_results[[1]])[,"cellid"]
 cellnall <- unionList(rownames(cell.info), 
 					  cnv.cellid, 
 					  rna.cellid, 
 					  mut.cellid,
-		     			  rnaseq$rnaseq$cellid,
+		     			  rnaseq_cellid_all,
 		     			  MutationAll$cellid)
 newcells <- setdiff(cellnall, rownames(cell.info))
 newRows <- matrix(NA_character_, nrow=length(newcells), ncol=ncol(cell.info))
@@ -472,7 +472,7 @@ cellsPresent <- sort(unionList(sens.info$cellid,
 					  pData(MutationEset)$cellid,
 					  pData(FusionEset)$cellid,
 					  pData(cl.eset)$cellid,
-		    			  rnaseq$rnaseq$cellid,
+		    			  rnaseq_cellid_all,
 			      		  MutationAll$cellid))
 cell.info <- cell.info[cellsPresent,]
 cell.info$tissueid <- curationTissue[rownames(cell.info), "unique.tissueid"]
