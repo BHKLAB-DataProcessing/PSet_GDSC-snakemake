@@ -700,9 +700,10 @@ GDSC@sensitivity$profiles[noisy_out$noisy, ] <- NA
 #save(GDSC, file=paste0("/pfs/out/GDSC", version, ".RData"), version=2)
 saveRDS(GDSC, file=paste0("/pfs/out/GDSC", version, ".rds"), version=2)
 
+dataset <- paste0("GDSC", gsub("v", "",version))
+		 
 #output ORCESTRA_ID and Pachyderm commit id
+write.table(dataset, file="/pfs/out/dataset.txt", row.names = F ,quote = F, sep = "\t", col.names = F)
 write.table(ORCESTRA_ID, file="/pfs/out/orcestra_id.txt", row.names = F ,quote = F, sep = "\t", col.names = F)				   
 pach_commit_id <- Sys.getenv("PACH_OUTPUT_COMMIT_ID")
 write.table(pach_commit_id, file="/pfs/out/commit_id.txt", row.names = F ,quote = F, sep = "\t", col.names = F) 
-
-
