@@ -621,7 +621,7 @@ cell.info$CellLine.Type <- cell_type
 #add metastatic info to cell_info		 
 metastatic <- cell_all$Metastatic[match(cell.info$unique.cellid, cell_all$unique.cellid)]
 cell.info$Metastatic <- metastatic		 
-cell.info <- cell.info[rownames(curationCell),]
+curationCell <- curationCell[rownames(cell.info),]
 
 standardize <- standardizeRawDataConcRange(sens.info = sens.info, sens.raw = sens.raw)
 
