@@ -489,6 +489,8 @@ rownames(drug_all) <- drug_all[ , "unique.drugid"]
 
 drug_all <- drug_all[rownames(drug.info),]
 drug.info[,c("smiles","inchikey","cid","FDA")] <- drug_all[,c("smiles","inchikey","cid","FDA")]
+drug.info$GDSC2019.drugid <- NULL
+colnames(drug.info)[which(names(drug.info) == "unique.drugid")] <- "drugid"
 
 curationDrug <- curationDrug[rownames(drug.info),]
 
@@ -598,28 +600,29 @@ z <- c(z,c(
 
 		 
 #add cellosaurus disease type to cell-info
-
-disease <- cell_all$Cellosaurus.Disease.Type[match(cell.info$unique.cellid, cell_all$unique.cellid)]
+		 
+colnames(cell.info)[which(names(cell.info) == "unique.cellid")] <- "cellid"
+disease <- cell_all$Cellosaurus.Disease.Type[match(cell.info$cellid, cell_all$unique.cellid)]
 cell.info$Cellosaurus.Disease.Type <- disease		 
 
 #add cellosaurus assession to cell-info
-assession <- cell_all$Cellosaurus.Accession.id[match(cell.info$unique.cellid, cell_all$unique.cellid)]
+assession <- cell_all$Cellosaurus.Accession.id[match(cell.info$cellid, cell_all$unique.cellid)]
 cell.info$Cellosaurus.Accession.id <- assession
 		 
 #add pharmacodb id to cell-info
-pdb <- cell_all$PharmacoDB.id[match(cell.info$unique.cellid, cell_all$unique.cellid)]
+pdb <- cell_all$PharmacoDB.id[match(cell.info$cellid, cell_all$unique.cellid)]
 cell.info$PharmacoDB.id <- pdb
 
 #add study tissue id to cell_info
-study_tissue <- cell_all$unique.tissueid.fromstudies[match(cell.info$unique.cellid, cell_all$unique.cellid)]
+study_tissue <- cell_all$unique.tissueid.fromstudies[match(cell.info$cellid, cell_all$unique.cellid)]
 cell.info$unique.tissueid.fromstudies <- study_tissue
 		 
 #add study cell-line type to cell_info
-cell_type <- cell_all$CellLine.Type[match(cell.info$unique.cellid, cell_all$unique.cellid)]
+cell_type <- cell_all$CellLine.Type[match(cell.info$cellid, cell_all$unique.cellid)]
 cell.info$CellLine.Type <- cell_type
 		 
 #add metastatic info to cell_info		 
-metastatic <- cell_all$Metastatic[match(cell.info$unique.cellid, cell_all$unique.cellid)]
+metastatic <- cell_all$Metastatic[match(cell.info$cellid, cell_all$unique.cellid)]
 cell.info$Metastatic <- metastatic		 
 curationCell <- curationCell[rownames(cell.info),]
 
