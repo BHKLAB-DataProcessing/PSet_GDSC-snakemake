@@ -625,7 +625,8 @@ cell.info$CellLine.Type <- cell_type
 metastatic <- cell_all$Metastatic[match(cell.info$cellid, cell_all$unique.cellid)]
 cell.info$Metastatic <- metastatic		 
 curationCell <- curationCell[rownames(cell.info),]
-
+curationTissue <- curationTissue[rownames(cell.info),]
+		 
 standardize <- standardizeRawDataConcRange(sens.info = sens.info, sens.raw = sens.raw)
 
 GDSC <- PharmacoSet(molecularProfiles=z,
