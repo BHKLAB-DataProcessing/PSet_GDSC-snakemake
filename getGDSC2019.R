@@ -451,7 +451,6 @@ annotation(gdsc.u219.ensg) <- "rna"
 ensemblIds <- sapply(strsplit(rownames(exprs(gdsc.u219.ensg)), "_"), function (x) { return (x[[1]]) }) 
 fData(gdsc.u219.ensg) <- data.frame("Probe"=rownames(exprs(gdsc.u219.ensg)), 
                           "EnsemblGeneId"=ensemblIds,
-                          "EntrezGeneId"=annot[ensemblIds, "EntrezGene.ID"],
                           "Symbol"=annot[ensemblIds, "gene_name"],
                           "GeneBioType"=annot[ensemblIds, "gene_biotype"],
                           "BEST"=TRUE)
