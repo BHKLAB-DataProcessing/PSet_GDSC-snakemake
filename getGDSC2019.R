@@ -143,11 +143,13 @@ MutationEset <- ExpressionSet(t(mutation))
 
 colnames(MutationEset) <- mut.cellid
 
-geneMap <- read.csv(file.path(myDirPrefix, "downAnnotations/annot_ensembl_all_genes.csv"))
-geneInfoM <- geneMap[na.omit(match(rownames(MutationEset),geneMap[ , "gene_name"]) ), c("gene_id", "EntrezGene.ID", "gene_name", "gene_biotype")] 
+load("/pfs/downAnnotations/Ensembl.v99.annotation.RData")
+geneMap <- features_gene
+
+geneInfoM <- geneMap[na.omit(match(rownames(MutationEset),geneMap[ , "gene_name"]) ), c("gene_id", "gene_name", "gene_biotype")] 
 rownames(geneInfoM) <- geneInfoM[ , "gene_name"]     
 geneInfoM <- geneInfoM[rownames(MutationEset),]
-colnames(geneInfoM) <- c("EnsemblGeneId", "EntrezGeneId", "Symbol", "GeneBioType")
+colnames(geneInfoM) <- c("EnsemblGeneId", "Symbol", "GeneBioType")
 rownames(geneInfoM) <- rownames(MutationEset)
 fData(MutationEset) <- geneInfoM 
 tttt <- data.frame(row.names=colnames(MutationEset), colnames(MutationEset))
@@ -274,6 +276,12 @@ summarizeRnaSeq <- function (dir,
   }
   pData(transcript.count) <- samples_annotation[sampleNames(transcript.count),]
   annotation(transcript.count) <- "isoforms"
+	
+	
+  pData(gene.exp)[ ,"batchid"] <- NA
+  pData(gene.count)[ ,"batchid"] <- NA	  
+  pData(transcript.exp)[ ,"batchid"] <- NA
+  pData(transcript.count)[ ,"batchid"] <- NA
   
   return(list("rnaseq"=gene.exp, 
               "rnaseq.counts"=gene.count, 
@@ -344,8 +352,7 @@ matrix_final <- reshape2::acast(xx_df_2, gene_symbol ~ model_name, value.var = "
 matrix_final[which(is.na(matrix_final))] <- "wt"
 
 
-geneMap <- read.csv("/pfs/downAnnotations/annot_ensembl_all_genes.csv")
-geneInfoM <- geneMap[na.omit(match(rownames(matrix_final),geneMap[ , "gene_name"])), c("gene_id", "EntrezGene.ID", "gene_name", "gene_biotype")] 
+geneInfoM <- geneMap[na.omit(match(rownames(matrix_final),geneMap[ , "gene_name"])), c("gene_id", "gene_name", "gene_biotype")] 
 rownames(geneInfoM) <- geneInfoM[ , "gene_name"] 
 missing_genes <- rownames(matrix_final)[which(!rownames(matrix_final) %in% geneMap$gene_name)]
 all_genes <- c(rownames(geneInfoM), missing_genes)
@@ -353,7 +360,7 @@ geneInfoM[nrow(geneInfoM)+ length(missing_genes),] <- NA
 rownames(geneInfoM) <- all_genes
 
 geneInfoM <- geneInfoM[rownames(matrix_final),] 
-colnames(geneInfoM) <- c("EnsemblGeneId", "EntrezGeneId", "Symbol", "GeneBioType")
+colnames(geneInfoM) <- c("EnsemblGeneId", "Symbol", "GeneBioType")
 
 MutationAll <- Biobase::ExpressionSet(matrix_final)
 tttt <- data.frame(row.names=colnames(MutationAll), colnames(MutationAll))
@@ -460,9 +467,9 @@ rownames(pData(cl.eset)) <- tt
 pData(cl.eset)[,"batchid"] <- NA
 pData(cl.eset)[,"cellid"] <- cnv.cellid
 pData(cl.eset) <- pData(cl.eset)[,c("cellid","batchid")]
-tt <- annot[match(rownames(fData(cl.eset)), annot$gene_name), c("gene_id", "EntrezGene.ID", "gene_name", "gene_biotype")]
+tt <- annot[match(rownames(fData(cl.eset)), geneMap$gene_name), c("gene_id", "gene_name", "gene_biotype")]
 rownames(tt) <- rownames(fData(cl.eset))
-colnames(tt) <- c("EnsemblGeneId", "EntrezGeneId", "Symbol", "GeneBioType")
+colnames(tt) <- c("EnsemblGeneId", "Symbol", "GeneBioType")
 fData(cl.eset) <- tt
 annotation(cl.eset) <- "cnv"
 
