@@ -87,12 +87,13 @@ sens.profiles <- sens.profiles[rownames(sens.info),]
 
 message("Loading RNA Data")
 
-load(file.path(myDirPrefix, "gdscU219normalized/GDSC_U219_ENSG.RData"))
+load(file.path(myDirPrefix, "gdscU133a_normalized/GDSC_U133a_ENSG.RData"))
 
 cell.all <- read.csv(file.path(myDirPrefix, "downAnnotations/cell_annotation_all.csv"))
 
-
-rna.cellid <- matchToIDTable(ids=phenoData(cgp.u219.ensg)$Characteristics.cell.line., tbl=cell.all, column = "CGP_EMTAB3610.cellid", returnColumn="unique.cellid")
+cgp.u133a.ensg@phenoData@data$Characteristics.CellLine.[grep("MZ2-MEL.", cgp.u133a.ensg@phenoData@data$Characteristics.CellLine.)] <- c("MZ2-MEL","MZ2-MEL")
+rna.cellid <- as.character(matchToIDTable(ids=cgp.u133a.ensg@phenoData@data$Characteristics.CellLine., tbl=cell_all, column = "CGP.cellid", returnColumn="unique.cellid"))
+pData(cgp.u133a.ensg)[,"cellid"] <- rna.cellid
 
 
 message("Loading CNV Data")
@@ -446,17 +447,17 @@ rownames(curationDrug) <- rownames(drug.info)
 
 annot <- geneMap
 rownames(annot) <- annot$gene_id
-gdsc.u219.ensg <- cgp.u219.ensg
-annotation(gdsc.u219.ensg) <- "rna"
-ensemblIds <- sapply(strsplit(rownames(exprs(gdsc.u219.ensg)), "_"), function (x) { return (x[[1]]) }) 
-fData(gdsc.u219.ensg) <- data.frame("Probe"=rownames(exprs(gdsc.u219.ensg)), 
-                          "EnsemblGeneId"=ensemblIds,
-                          "Symbol"=annot[ensemblIds, "gene_name"],
-                          "GeneBioType"=annot[ensemblIds, "gene_biotype"],
-                          "BEST"=TRUE)
-rownames(fData(gdsc.u219.ensg)) <- rownames(exprs(gdsc.u219.ensg))
-pData(gdsc.u219.ensg)[,"batchid"] <- NA
-pData(gdsc.u219.ensg)[,"cellid"] <- rna.cellid
+#gdsc.u219.ensg <- cgp.u219.ensg
+#annotation(gdsc.u219.ensg) <- "rna"
+#ensemblIds <- sapply(strsplit(rownames(exprs(gdsc.u219.ensg)), "_"), function (x) { return (x[[1]]) }) 
+#fData(gdsc.u219.ensg) <- data.frame("Probe"=rownames(exprs(gdsc.u219.ensg)), 
+                          #"EnsemblGeneId"=ensemblIds,
+                          #"Symbol"=annot[ensemblIds, "gene_name"],
+                          #"GeneBioType"=annot[ensemblIds, "gene_biotype"],
+                          #"BEST"=TRUE)
+#rownames(fData(gdsc.u219.ensg)) <- rownames(exprs(gdsc.u219.ensg))
+#pData(gdsc.u219.ensg)[,"batchid"] <- NA
+#pData(gdsc.u219.ensg)[,"cellid"] <- rna.cellid
 
 #Compile CNV data
 
@@ -474,7 +475,7 @@ annotation(cl.eset) <- "cnv"
 
 
 cellsPresent <- sort(unionList(sens.info$cellid, 
-					  pData(gdsc.u219.ensg)$cellid, 
+					  pData(cgp.u133a.ensg)$cellid, 
 					  pData(MutationEset)$cellid,
 					  pData(FusionEset)$cellid,
 					  pData(cl.eset)$cellid,
@@ -596,7 +597,7 @@ z <- list()
 
 z <- c(z,c(
   rnaseq_results,
-  "rna"=gdsc.u219.ensg, 
+  "rna"=cgp.u133a.ensg, 
   "mutation"=MutationEset, 
   "mutation_exome"=MutationAll,
   "fusion"=FusionEset, 
