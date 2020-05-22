@@ -708,7 +708,10 @@ return(list("noisy"=noisy, "ok"=acceptable))
 noisy_out <- filterNoisyCurves2(GDSC)
 print("filter done")
 GDSC@sensitivity$profiles[noisy_out$noisy, ] <- NA		 
+
+GDSC <- PharmacoGx::.convertPsetMolecularProfilesToSE(GDSC)		 
 		 
+
 #save(GDSC, file=paste0("/pfs/out/GDSC", version, ".RData"), version=2)
 saveRDS(GDSC, file=paste0("/pfs/out/GDSC", gsub("v", "",version), ".rds"), version=2)
 		 
