@@ -374,7 +374,7 @@ pData(MutationAll)[, "batchid"] <- NA
 
 
 rnaseq_cellid_all <- pData(rnaseq_results[[1]])[,"cellid"]
-cellnall <- CoreGx::.unionList(rownames(cell.info), 
+cellnall <- unionList(rownames(cell.info), 
 					  cnv.cellid, 
 					  rna.cellid, 
 					  mut.cellid,
@@ -475,7 +475,7 @@ fData(cl.eset) <- tt
 annotation(cl.eset) <- "cnv"
 
 
-cellsPresent <- sort(CoreGx::.unionList(sens.info$cellid, 
+cellsPresent <- sort(unionList(sens.info$cellid, 
 					  pData(cgp.u133a.ensg)$cellid, 
 					  pData(MutationEset)$cellid,
 					  pData(FusionEset)$cellid,
@@ -710,7 +710,54 @@ noisy_out <- filterNoisyCurves2(GDSC)
 print("filter done")
 GDSC@sensitivity$profiles[noisy_out$noisy, ] <- NA		 
 
-GDSC <- PharmacoGx::.convertPsetMolecularProfilesToSE(GDSC)		 
+.convertPsetMolecularProfilesToSE <- function(pSet) {
+  
+  if (!is.null(pSet@annotation$version) && pSet@annotation$version >= 2 ){
+    return(pSet)
+  }
+  
+  eSets <- pSet@molecularProfiles # Extract eSet data
+  
+  pSet@molecularProfiles <-
+    lapply(eSets,
+           function(eSet){
+             
+             # Change rownames from probes to EnsemblGeneId for rna data type
+             if (grepl("^rna$", Biobase::annotation(eSet))) {
+               rownames(eSet) <- Biobase::fData(eSet)$EnsemblGeneId
+             }
+             
+             # Build summarized experiment from eSet
+             SE <- SummarizedExperiment::SummarizedExperiment(
+               ## TODO:: Do we want to pass an environment for better memory efficiency?
+               assays=S4Vectors::SimpleList(as.list(Biobase::assayData(eSet))
+               ),
+               # Switch rearrange columns so that IDs are first, probes second
+               rowData=S4Vectors::DataFrame(Biobase::fData(eSet),
+                                            rownames=rownames(Biobase::fData(eSet)) 
+               ),
+               colData=S4Vectors::DataFrame(Biobase::pData(eSet),
+                                            rownames=rownames(Biobase::pData(eSet))
+               ),
+               metadata=list("experimentData" = eSet@experimentData, 
+                             "annotation" = Biobase::annotation(eSet), 
+                             "protocolData" = Biobase::protocolData(eSet)
+               )
+             )
+             ## TODO:: Determine if this can be done in the SE constructor?
+             # Extract names from expression set
+             SummarizedExperiment::assayNames(SE) <- Biobase::assayDataElementNames(eSet)
+             # Assign SE to pSet
+             mDataType <- Biobase::annotation(eSet)
+             pSet@molecularProfiles[[mDataType]] <- SE
+           })
+  setNames(pSet@molecularProfiles, names(eSets))
+  pSet@annotation$version <- 2
+  pSet
+}
+
+
+GDSC <- .convertPsetMolecularProfilesToSE(GDSC)		 
 		 
 
 #save(GDSC, file=paste0("/pfs/out/GDSC", version, ".RData"), version=2)
