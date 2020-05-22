@@ -8,6 +8,7 @@ library(reshape2)
 library(dplyr)
 library(data.table)
 library(reshape2)
+library(CoreGx)
 
 options(stringsAsFactors=FALSE)
 print("Retrieving selection")
@@ -373,7 +374,7 @@ pData(MutationAll)[, "batchid"] <- NA
 
 
 rnaseq_cellid_all <- pData(rnaseq_results[[1]])[,"cellid"]
-cellnall <- unionList(rownames(cell.info), 
+cellnall <- CoreGx::.unionList(rownames(cell.info), 
 					  cnv.cellid, 
 					  rna.cellid, 
 					  mut.cellid,
@@ -474,7 +475,7 @@ fData(cl.eset) <- tt
 annotation(cl.eset) <- "cnv"
 
 
-cellsPresent <- sort(unionList(sens.info$cellid, 
+cellsPresent <- sort(CoreGx::.unionList(sens.info$cellid, 
 					  pData(cgp.u133a.ensg)$cellid, 
 					  pData(MutationEset)$cellid,
 					  pData(FusionEset)$cellid,
