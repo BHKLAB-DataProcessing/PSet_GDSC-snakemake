@@ -9,6 +9,7 @@ library(dplyr)
 library(data.table)
 library(reshape2)
 library(CoreGx)
+library(SummarizedExperiment)
 
 options(stringsAsFactors=FALSE)
 print("Retrieving selection")
