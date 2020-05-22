@@ -8,7 +8,7 @@ library(reshape2)
 library(dplyr)
 library(data.table)
 library(reshape2)
-library(CoreGx)
+#library(CoreGx)
 
 options(stringsAsFactors=FALSE)
 print("Retrieving selection")
