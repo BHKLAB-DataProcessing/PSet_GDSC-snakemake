@@ -748,56 +748,8 @@ noisy_out <- filterNoisyCurves2(GDSC)
 print("filter done")
 GDSC@sensitivity$profiles[noisy_out$noisy, ] <- NA		 
 
-.convertPsetMolecularProfilesToSE <- function(pSet) {
-  
-  if (!is.null(pSet@annotation$version) && pSet@annotation$version >= 2 ){
-    return(pSet)
-  }
-  
-  eSets <- pSet@molecularProfiles # Extract eSet data
-  
-  pSet@molecularProfiles <-
-    lapply(eSets,
-           function(eSet){
-             
-             # Change rownames from probes to EnsemblGeneId for rna data type
-             if (grepl("^rna$", Biobase::annotation(eSet))) {
-               rownames(eSet) <- Biobase::fData(eSet)$EnsemblGeneId
-             }
-             
-             # Build summarized experiment from eSet
-             SE <- SummarizedExperiment::SummarizedExperiment(
-               ## TODO:: Do we want to pass an environment for better memory efficiency?
-               assays=S4Vectors::SimpleList(as.list(Biobase::assayData(eSet))
-               ),
-               # Switch rearrange columns so that IDs are first, probes second
-               rowData=S4Vectors::DataFrame(Biobase::fData(eSet),
-                                            rownames=rownames(Biobase::fData(eSet)) 
-               ),
-               colData=S4Vectors::DataFrame(Biobase::pData(eSet),
-                                            rownames=rownames(Biobase::pData(eSet))
-               ),
-               metadata=list("experimentData" = eSet@experimentData, 
-                             "annotation" = Biobase::annotation(eSet), 
-                             "protocolData" = Biobase::protocolData(eSet)
-               )
-             )
-             ## TODO:: Determine if this can be done in the SE constructor?
-             # Extract names from expression set
-             SummarizedExperiment::assayNames(SE) <- Biobase::assayDataElementNames(eSet)
-             # Assign SE to pSet
-             mDataType <- Biobase::annotation(eSet)
-             pSet@molecularProfiles[[mDataType]] <- SE
-           })
-  setNames(pSet@molecularProfiles, names(eSets))
-  pSet@annotation$version <- 2
-  pSet
-}
-
-
-GDSC <- .convertPsetMolecularProfilesToSE(GDSC)		 
+	 
 		 
-
 #save(GDSC, file=paste0("/pfs/out/GDSC", version, ".RData"), version=2)
 saveRDS(GDSC, file=paste0("/pfs/out/GDSC", gsub("v", "",version), ".rds"), version=2)
 		 
