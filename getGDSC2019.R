@@ -374,7 +374,7 @@ pData(MutationAll)[, "batchid"] <- NA
 
 
 rnaseq_cellid_all <- pData(rnaseq_results[[1]])[,"cellid"]
-cellnall <- unionList(rownames(cell.info), 
+cellnall <- CoreGx::.unionList(rownames(cell.info), 
 					  cnv.cellid, 
 					  rna.cellid, 
 					  mut.cellid,
@@ -475,7 +475,7 @@ fData(cl.eset) <- tt
 annotation(cl.eset) <- "cnv"
 
 
-cellsPresent <- sort(unionList(sens.info$cellid, 
+cellsPresent <- sort(CoreGx::.unionList(sens.info$cellid, 
 					  pData(cgp.u133a.ensg)$cellid, 
 					  pData(MutationEset)$cellid,
 					  pData(FusionEset)$cellid,
@@ -674,7 +674,7 @@ curationTissue <- curationTissue[rownames(cell.info),]
 		 
 standardize <- standardizeRawDataConcRange(sens.info = sens.info, sens.raw = sens.raw)
 
-GDSC <- PharmacoSet(molecularProfiles=z,
+GDSC <- PharmacoGx::PharmacoSet(molecularProfiles=z,
                       name=paste("GDSC", version, sep="_"), 
                       cell=cell.info, 
                       drug=drug.info, 
