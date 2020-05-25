@@ -112,7 +112,9 @@ message("Loading CNV Data")
 
 #load(file.path(myDirPrefix, "gdscCNA/GDSC_eset.RData"))
 cl.eset <- readRDS("/pfs/gdsc_cnv_new/GDSC_CN.gene.RDS")
-
+y <- ExpressionSet(cl.eset@assayData$exprs) #remove other assays for now (nAraw, nBraw, nMajor, nMinor, TCN), as SummarizeMolecularProfiles does not support multi-assays
+pData(y) <- cl.eset@phenoData@data
+cl.eset <- y
 cl.eset$GDSC.cellid <- as.character(cl.eset$`Sample Name`)
 cnv.cellid <- as.character(matchToIDTable(ids=cl.eset$GDSC.cellid, tbl=cell.all, column="GDSC.SNP.cellid", returnColumn = "unique.cellid"))
 
