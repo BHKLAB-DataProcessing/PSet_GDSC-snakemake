@@ -755,9 +755,9 @@ return(list("noisy"=noisy, "ok"=acceptable))
   return(max(cum.sum))
 }
 		 
-noisy_out <- filterNoisyCurves2(GDSC)
-print("filter done")
-GDSC@sensitivity$profiles[noisy_out$noisy, ] <- NA		 
+#noisy_out <- filterNoisyCurves2(GDSC)
+#print("filter done")
+#GDSC@sensitivity$profiles[noisy_out$noisy, ] <- NA		 
 
 	 
 		 
