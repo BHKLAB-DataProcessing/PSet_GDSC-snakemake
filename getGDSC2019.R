@@ -32,8 +32,10 @@ tool_path = paste0(tool_path$a, "_",tool_path$b)
 	  
 print(tool_path)
 
-version <- tail(args, n=2)[1]
+version <- tail(args, n=3)[1]
+drug_version <- tail(args, n=2)[1]
 print(version)
+print(drug_version)
 
 matchToIDTable <- function(ids,tbl, column, returnColumn="unique.cellid") {
 	sapply(ids, function(x) {
@@ -61,12 +63,19 @@ switch(version, v1 = {
 
 	})
 
+switch(drug_version, "8.0" = {
+  Name <- ""
+  
+}, "8.2" = {
+  Name <- "_8.2"
+})
+
 cell_all <- read.csv("/pfs/downAnnotations/cell_annotation_all.csv", na.strings=c("", " ", "NA"))
 
 message("Loading Sensitivity Data")
 
-sens.info <- readRDS(file=file.path(myDirPrefix, sensFolder, paste0(myInPrefix, "_sens_info.rds")))
-sens.raw <- readRDS(file=file.path(myDirPrefix, sensFolder, paste0(myInPrefix, "_sens_raw.rds")))
+sens.info <- readRDS(file=file.path(myDirPrefix, sensFolder, paste0(myInPrefix, "_sens_info", Name,".rds")))
+sens.raw <- readRDS(file=file.path(myDirPrefix, sensFolder, paste0(myInPrefix, "_sens_raw", Name, ".rds")))
 rownames(sens.info) <- sens.info$exp_id
 rownames(sens.raw) <- sens.info$exp_id
 
@@ -81,7 +90,7 @@ rownames(sens.raw) <- sens.info$exp_id
 
 # sens.profiles <- cbind(data.frame("AAC" = sens.recalc$AUC, "IC50" = sens.recalc$IC50), sens.pars)
 
-load(file.path(myDirPrefix, profFolder, "profiles.RData"))
+load(file.path(myDirPrefix, profFolder,  paste0("profiles",Name,".RData")))
 
 sens.profiles <- res
 
@@ -191,8 +200,8 @@ pData(FusionEset)[, "batchid"] <- NA
 message("Loading Cell and Drug Info")
 
 
-load(file.path(myDirPrefix, "gdsc1000CellInfo/cellInfo.RData"))
-load(file.path(myDirPrefix, "gdscDrugInfo/drugInfo.RData"))
+load(file.path(myDirPrefix, paste0("gdsc1000CellInfo/","cellInfo", Name,".RData")))
+load(file.path(myDirPrefix, paste0("gdscDrugInfo/","drugInfo", Name,".RData")))
 
 
 rownames(cell.info) <- cell.info$unique.cellid
