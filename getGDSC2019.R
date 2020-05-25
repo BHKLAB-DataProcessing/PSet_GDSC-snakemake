@@ -751,13 +751,16 @@ return(list("noisy"=noisy, "ok"=acceptable))
   }
   tt <- t(combn(1:length(xx), 2 , simplify = TRUE))
   tt <- tt[which(((tt[,2] - tt[,1]) >= 2) == TRUE),]
+  if (is.null(nrow(tt))){
+    tt <- matrix(tt, ncol = 2)
+  }
   cum.sum <- unlist(lapply(1:nrow(tt), function(x){xx[tt[x,2]]-xx[tt[x,1]]}))
   return(max(cum.sum))
 }
 		 
-#noisy_out <- filterNoisyCurves2(GDSC)
-#print("filter done")
-#GDSC@sensitivity$profiles[noisy_out$noisy, ] <- NA		 
+noisy_out <- filterNoisyCurves2(GDSC)
+print("filter done")
+GDSC@sensitivity$profiles[noisy_out$noisy, ] <- NA		 
 
 	 
 		 
