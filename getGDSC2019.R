@@ -1,7 +1,6 @@
 #!/usr/bin/env Rscript
 
 library(PharmacoGx)
-# library(PharmacoGxPrivate)
 library(data.table)
 library(Biobase)
 library(reshape2)
