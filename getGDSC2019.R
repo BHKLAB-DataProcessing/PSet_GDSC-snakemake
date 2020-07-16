@@ -20,6 +20,10 @@ print(rnaseq_select)
 rnaseq_results <- list()
 ORCESTRA_ID = tail(rnaseq_select, n=1)
 
+cnv_select <-  grep('cnv', rnaseq_select)
+mutation_select <-  grep('mutation', rnaseq_select)
+microarray_select <-  grep('microarray', rnaseq_select)
+fusion_select <-  grep('fusion', rnaseq_select)
 	  
 tools <- grep(pattern = 'Kallisto|Salmon', x = rnaseq_select)
 tools <- rnaseq_select[tools]
@@ -604,6 +608,62 @@ standardizeRawDataConcRange <- function(sens.info, sens.raw){
 
     return(list("sens.info" = sens.info, sens.raw = sens.raw))
 }
+	
+
+if (length(cnv_select) > 0){
+  cnv_cells_id <- cl.eset$cellid
+} else {
+  cnv_cells_id <- c()
+  cl.eset <- ExpressionSet()
+  pData(cl.eset)$cellid <- character()
+  pData(cl.eset)$batchid <- character()
+  fData(cl.eset)$BEST <- vector()
+  fData(cl.eset)$Symbol <- character()
+  annotation(cl.eset) <- "CNV data was not selected for on ORCESTRA"
+}
+		 
+if (length(mutation_select) > 0){
+  mutation_cells_id <- c(MutationEset$cellid, MutationAll$cellid)
+} else {
+  mutation_cells_id <- c()
+  MutationEset <-  ExpressionSet()
+  pData(MutationEset)$cellid <- character()
+  pData(MutationEset)$batchid <- character()
+  fData(MutationEset)$BEST <- vector()
+  fData(MutationEset)$Symbol <- character()
+  annotation(MutationEset) <- "Mutation data was not selected for on ORCESTRA"
+	
+  MutationAll <-  ExpressionSet()
+  pData(MutationAll)$cellid <- character()
+  pData(MutationAll)$batchid <- character()
+  fData(MutationAll)$BEST <- vector()
+  fData(MutationAll)$Symbol <- character()
+  annotation(MutationAll) <- "Mutation data was not selected for on ORCESTRA"
+}
+		 
+if (length(microarray_select) > 0){
+  microarray_cells_id <- cgp.u133a.ensg$cellid
+} else {
+  microarray_cells_id <- c()
+  cgp.u133a.ensg <- ExpressionSet()
+  pData(cgp.u133a.ensg)$cellid <- character()
+  pData(cgp.u133a.ensg)$batchid <- character()
+  fData(cgp.u133a.ensg)$BEST <- vector()
+  fData(cgp.u133a.ensg)$Symbol <- character()
+  annotation(cgp.u133a.ensg) <- "Microarray data was not selected for on ORCESTRA"
+}
+		 
+if (length(fusion_select) > 0){
+  fusion_cells_id <- FusionEset$cellid
+} else {
+  fusion_cells_id <- c()
+  FusionEset <- ExpressionSet()
+  pData(FusionEset)$cellid <- character()
+  pData(FusionEset)$batchid <- character()
+  fData(FusionEset)$BEST <- vector()
+  fData(FusionEset)$Symbol <- character()
+  annotation(FusionEset) <- "Fusion data was not selected for on ORCESTRA"
+}	 
 		 
 z <- list()
 
@@ -682,6 +742,12 @@ metastatic <- cell_all$Metastatic[match(cell.info$cellid, cell_all$unique.cellid
 cell.info$Metastatic <- metastatic		 
 curationCell <- curationCell[rownames(cell.info),]
 curationTissue <- curationTissue[rownames(cell.info),]
+		 
+cells_keep <- unique(c(rnaseq_cellid_all, sens.info$cellid, cnv_cells_id, mutation_cells_id, microarray_cells_id, fusion_cells_id))
+		 
+cell.info <- cell.info[cells_keep,]
+curationCell <- curationCell[cells_keep,]
+curationTissue <- curationTissue[cells_keep,]
 		 
 standardize <- standardizeRawDataConcRange(sens.info = sens.info, sens.raw = sens.raw)
 
