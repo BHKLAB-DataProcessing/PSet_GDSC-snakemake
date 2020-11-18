@@ -1,5 +1,6 @@
 #!/usr/bin/env Rscript
 
+
 library(PharmacoGx)
 library(data.table)
 library(Biobase)
@@ -360,6 +361,18 @@ load(file.path(myDirPrefix, paste0("gdscDrugInfo/","drugInfo", Name,".RData")))
 rownames(cell.info) <- cell.info$unique.cellid
 
 
+message("Loading DepMap Extended Mutation Data")
+
+
+mutExtended <- readRDS(file.path(myDirPrefix, "filterGDSCMut/gdscMutationExtended.rds"))
+cellData <- read.csv(file.path(myDirPrefix, "DepMapMutations/sample_info.csv"))
+
+matchedByDepMap <- matchToIDTable(colnames(mutExtended), cell.all, "DepMap.cellid")
+matchedByDepMap.tissueid <- matchToIDTable(colnames(mutExtended), cell.all, "DepMap.cellid", "unique.tissueid")
+
+mutExtended$cellid <- matchedByDepMap
+
+
 
 summarizeRnaSeq <- function (dir, 
                              features_annotation,
@@ -541,8 +554,9 @@ cellnall <- CoreGx::.unionList(rownames(cell.info),
 					  cnv.cellid, 
 					  rna.cellid, 
 					  mut.cellid,
-		     			  rnaseq_cellid_all,
-		     			  MutationAll$cellid)
+		     		rnaseq_cellid_all,
+		     		MutationAll$cellid,
+            mutExtended$cellid)
 newcells <- setdiff(cellnall, rownames(cell.info))
 newRows <- matrix(NA_character_, nrow=length(newcells), ncol=ncol(cell.info))
 # newRows <- cell.info[newcells,]
@@ -588,8 +602,9 @@ curationCell <- data.frame(unique.cellid = rownames(cell.info),
 						   CGP.cellid = NA_character_,
 						   GDSC.SNP.cellid = NA_character_,
 						   CGP_EMTAB3610.cellid = NA_character_,
-			  			   GDSC_rnaseq.cellid = NA_character_,
-			  		           GDSC1000.cellid = NA_character_)
+			  			 GDSC_rnaseq.cellid = NA_character_,
+			  		   GDSC1000.cellid = NA_character_,
+               DepMap.cellid = NA_character_)
 rownames(curationCell) <- curationCell$unique.cellid
 
 myx <- match(rownames(curationCell),cell.all$unique.cellid)
@@ -599,6 +614,7 @@ curationCell$GDSC.SNP.cellid <- cell.all[myx, "GDSC.SNP.cellid"]
 curationCell$CGP_EMTAB3610.cellid <- cell.all[myx, "CGP_EMTAB3610.cellid"]
 curationCell$GDSC_rnaseq.cellid <- cell.all[myx, "GDSC_rnaseq.cellid"]
 curationCell$GDSC1000.cellid <- cell.all[myx, "GDSC1000.cellid"]
+curationCell$DepMap.cellid <- cell.all[myx, "DepMap.cellid"]
 
 cell.info$tissueid <- cell.all[myx, "unique.tissueid"]
 
@@ -644,7 +660,8 @@ cellsPresent <- sort(CoreGx::.unionList(sens.info$cellid,
 					  pData(FusionEset)$cellid,
 					  pData(cl.eset)$cellid,
 		    			  rnaseq_cellid_all,
-			      		  MutationAll$cellid))
+			      		  MutationAll$cellid,
+                  mutExtended$cellid))
 cell.info <- cell.info[cellsPresent,]
 cell.info$tissueid <- curationTissue[rownames(cell.info), "unique.tissueid"]
 
@@ -730,6 +747,7 @@ z <- c(z,c(
   "rna"=cgp.u133a.ensg, 
   "mutation"=MutationEset, 
   "mutation_exome"=MutationAll,
+  "mutation_extended" = mutExtended,
   "fusion"=FusionEset, 
   "cnv"=cl.eset
   )
@@ -739,6 +757,7 @@ z <- c(z,c(
   
   SEfinal <- lapply(eSets,
          function(eSet){
+            if(!is(eSet, "ExpressionSet")){return(eSet)}
              # Change rownames from probes to EnsemblGeneId for rna data type
              if (grepl("^rna$", Biobase::annotation(eSet))) {
                rownames(eSet) <- Biobase::fData(eSet)$EnsemblGeneId
