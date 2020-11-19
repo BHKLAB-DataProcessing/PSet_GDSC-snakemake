@@ -370,7 +370,7 @@ cellData <- read.csv(file.path(myDirPrefix, "DepMapMutations/sample_info.csv"))
 matchedByDepMap <- matchToIDTable(colnames(mutExtended), cell.all, "DepMap.cellid")
 matchedByDepMap.tissueid <- matchToIDTable(colnames(mutExtended), cell.all, "DepMap.cellid", "unique.tissueid")
 
-mutExtended$cellid <- matchedByDepMap
+colData(mutExtended)$cellid <- matchedByDepMap
 
 
 
@@ -556,7 +556,7 @@ cellnall <- CoreGx::.unionList(rownames(cell.info),
 					  mut.cellid,
 		     		rnaseq_cellid_all,
 		     		MutationAll$cellid,
-            mutExtended$cellid)
+            colData(mutExtended)$cellid)
 newcells <- setdiff(cellnall, rownames(cell.info))
 newRows <- matrix(NA_character_, nrow=length(newcells), ncol=ncol(cell.info))
 # newRows <- cell.info[newcells,]
@@ -661,7 +661,7 @@ cellsPresent <- sort(CoreGx::.unionList(sens.info$cellid,
 					  pData(cl.eset)$cellid,
 		    			  rnaseq_cellid_all,
 			      		  MutationAll$cellid,
-                  mutExtended$cellid))
+                  colData(mutExtended)$cellid))
 cell.info <- cell.info[cellsPresent,]
 cell.info$tissueid <- curationTissue[rownames(cell.info), "unique.tissueid"]
 
