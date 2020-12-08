@@ -1,3 +1,3 @@
-# getGDSC
+# get GDSC
 
 
