@@ -808,9 +808,9 @@ curationTissue <- curationTissue[cells_keep,]
 
 if (length(standardize) > 0){
 
- standardize <- standardizeRawDataConcRange(sens.info = sens.info, sens.raw = sens.raw)
- sens.info <- standardize$sens.info
- sens.raw <- standardize$sens.raw
+# standardize <- standardizeRawDataConcRange(sens.info = sens.info, sens.raw = sens.raw)
+# sens.info <- standardize$sens.info
+# sens.raw <- standardize$sens.raw
 
 } else {
 print("unfiltered PSet")
