@@ -23,8 +23,9 @@ ORCESTRA_ID = tail(rnaseq_select, n=1)
 cnv_select <-  grep('cnv', rnaseq_select)
 mutation_select <-  grep('mutation', rnaseq_select)
 microarray_select <-  grep('microarray', rnaseq_select)
+microarray_v_select <- tail(args,n=3)[2]
 fusion_select <-  grep('fusion', rnaseq_select)
-	  
+
 tools <- grep(pattern = 'Kallisto|Salmon', x = rnaseq_select)
 tools <- rnaseq_select[tools]
 tools <- gsub("-", "_", tools)
@@ -32,13 +33,15 @@ transcriptome <- grep(pattern = 'Gencode|Ensembl', x = rnaseq_select)
 transcriptome <- rnaseq_select[transcriptome]
 tool_path = expand.grid(a = tools,b = transcriptome)
 tool_path = paste0(tool_path$a, "_",tool_path$b)
-	  
+
 print(tool_path)
 
 version <- head(args)[3]
 drug_version <- head(args)[4]
 print(version)
 print(drug_version)
+
+
 
 standardize <- args[grep("filtered", args)]
 
@@ -189,30 +192,30 @@ filterNoisyCurves2 <- function(pSet, epsilon=25 , positive.cutoff.percent=.80, m
 }   
 
 matchToIDTable <- function(ids,tbl, column, returnColumn="unique.cellid") {
-	sapply(ids, function(x) {
-                          myx <- grep(paste0("((///)|^)",Hmisc::escapeRegex(x),"((///)|$)"), tbl[,column])
-                          if(length(myx) > 1){
-                            stop("Something went wrong in curating ids, we have multiple matches")
-                          }
-			  if(length(myx) == 0){return(NA_character_)}
-                          return(tbl[myx, returnColumn])
-                        })
+  sapply(ids, function(x) {
+    myx <- grep(paste0("((///)|^)",Hmisc::escapeRegex(x),"((///)|$)"), tbl[,column])
+    if(length(myx) > 1){
+      stop("Something went wrong in curating ids, we have multiple matches")
+    }
+    if(length(myx) == 0){return(NA_character_)}
+    return(tbl[myx, returnColumn])
+  })
 }
 
 
 switch(version, v1 = {
-	myOutFile <- "GDSC_v1.RData"
-	myInPrefix <- "gdscv1"
+  myOutFile <- "GDSC_v1.RData"
+  myInPrefix <- "gdscv1"
   sensFolder <- "GDSC2019v1Normalize"
   profFolder <- "gdscProfilesV1"
-
-	}, v2 = {
-	myOutFile <- "GDSC_v2.RData"
-	myInPrefix <- "gdscv2"
+  
+}, v2 = {
+  myOutFile <- "GDSC_v2.RData"
+  myInPrefix <- "gdscv2"
   sensFolder <- "GDSC2019v2Normalize"
   profFolder <- "gdscprofilesV2"
-
-	})
+  
+})
 
 switch(drug_version, "8.0" = {
   Name <- ""
@@ -250,12 +253,24 @@ sens.profiles <- sens.profiles[rownames(sens.info),]
 message("Loading RNA Data")
 
 load(file.path(myDirPrefix, "gdscU133a_normalized/GDSC_U133a_ENSG.RData"))
+load(file.path(myDirPrefix, "gdscU219normalized/GDSC_U219_ENSG.RData"))
+
+if (length(microarray_select) > 0){
+  
+  switch(microarray_v_select, u133a = {
+    cgp.u133a.ensg@phenoData@data$Characteristics.CellLine.[grep("MZ2-MEL.", cgp.u133a.ensg@phenoData@data$Characteristics.CellLine.)] <- c("MZ2-MEL","MZ2-MEL")
+    rna.cellid <- as.character(matchToIDTable(ids=cgp.u133a.ensg@phenoData@data$Characteristics.CellLine., tbl=cell_all, column = "CGP.cellid", returnColumn="unique.cellid"))
+    pData(cgp.u133a.ensg)[,"cellid"] <- rna.cellid
+    microarray_data <- cgp.u133a.ensg
+    
+  }, u219 = {
+    microarray_data <- cgp.u219.ensg
+    
+  })
+} 
+
 
 cell.all <- read.csv(file.path(myDirPrefix, "downAnnotations/cell_annotation_all.csv"))
-
-cgp.u133a.ensg@phenoData@data$Characteristics.CellLine.[grep("MZ2-MEL.", cgp.u133a.ensg@phenoData@data$Characteristics.CellLine.)] <- c("MZ2-MEL","MZ2-MEL")
-rna.cellid <- as.character(matchToIDTable(ids=cgp.u133a.ensg@phenoData@data$Characteristics.CellLine., tbl=cell_all, column = "CGP.cellid", returnColumn="unique.cellid"))
-pData(cgp.u133a.ensg)[,"cellid"] <- rna.cellid
 
 
 message("Loading CNV Data")
@@ -293,16 +308,16 @@ rangeg <- which(colnames(mut.matrix) == "AKT2"):which(colnames(mut.matrix) == "V
 
 mutation <- as.matrix(mut.matrix[ , rangeg, drop=FALSE])
 mutation <- apply(X=mutation, MARGIN=c(1, 2), FUN=function(x) {
-    x <- unlist(strsplit(x, split="::"))
-    if(length(x) == 2) {
-      if(!is.na(x[[1]]) && (x[[1]] == "na")) {
-        x <- NA
-      } else {
-        x <- x[[1]]
-      }
-    } else { x <- NA }
-    return(x)
-  })
+  x <- unlist(strsplit(x, split="::"))
+  if(length(x) == 2) {
+    if(!is.na(x[[1]]) && (x[[1]] == "na")) {
+      x <- NA
+    } else {
+      x <- x[[1]]
+    }
+  } else { x <- NA }
+  return(x)
+})
 
 MutationEset <- ExpressionSet(t(mutation)) 
 
@@ -329,14 +344,14 @@ rangefus <- which(colnames(mut.matrix) == "BCR_ABL"):which(colnames(mut.matrix) 
 
 fusion <- as.matrix(mut.matrix[ , rangefus, drop=FALSE])
 fusion <- apply(X=fusion, MARGIN=c(1, 2), FUN=function(x) {
-    # x <- unlist(strsplit(x, split="::"))
-    if(x == "") {
-        x <- NA
-      } else if (x == "0"){
-        x <- "wt"
-      }
-    return(x)
-  })
+  # x <- unlist(strsplit(x, split="::"))
+  if(x == "") {
+    x <- NA
+  } else if (x == "0"){
+    x <- "wt"
+  }
+  return(x)
+})
 
 
 
@@ -363,34 +378,34 @@ rownames(cell.info) <- cell.info$unique.cellid
 summarizeRnaSeq <- function (dir, 
                              features_annotation,
                              samples_annotation,
-			      method) {
+                             method) {
   library(Biobase)
   library(readr)
   library(tximport)
   
   load(features_annotation)
-    
+  
   tx2gene <- as.data.frame(cbind("transcript"=tx2gene$transcripts, "gene"=tx2gene$genes))
   
   files <- list.files(dir, recursive = TRUE, full.names = T)
   if(method=="kallisto"){
-  resFiles <- grep("abundance.h5", files)
+    resFiles <- grep("abundance.h5", files)
   }else{
-  resFiles <- grep("quant.sf", files)
+    resFiles <- grep("quant.sf", files)
   }
   resFiles <- files[resFiles]
   length(resFiles)
   names(resFiles) <- basename(dirname(resFiles))
   
   if(features_annotation == "/pfs/downAnnotations/Ensembl.v99.annotation.RData"){
-  txi <- tximport(resFiles, type=method, tx2gene=tx2gene, ignoreAfterBar = TRUE, ignoreTxVersion = TRUE)
+    txi <- tximport(resFiles, type=method, tx2gene=tx2gene, ignoreAfterBar = TRUE, ignoreTxVersion = TRUE)
   } else{
-  txi <- tximport(resFiles, type=method, tx2gene=tx2gene, ignoreAfterBar = TRUE, ignoreTxVersion = FALSE)	  
+    txi <- tximport(resFiles, type=method, tx2gene=tx2gene, ignoreAfterBar = TRUE, ignoreTxVersion = FALSE)	  
   }
-	  
+  
   head(txi$counts[,1:5])
   dim(txi$counts)
-	  
+  
   xx <- txi$abundance
   gene.exp <- Biobase::ExpressionSet(log2(xx + 0.001))
   fData(gene.exp) <- features_gene[featureNames(gene.exp),]
@@ -406,42 +421,42 @@ summarizeRnaSeq <- function (dir,
   txii <- tximport(resFiles, type=method, txOut=T)
   
   if(features_annotation == "/pfs/downAnnotations/Ensembl.v99.annotation.RData"){
-  #remove non-coding transcripts in ensembl 	  
-  rownames(txii$abundance) <-  gsub("\\..*","",rownames(txii$abundance))
-  txii$abundance[which(!rownames(txii$abundance)  %in% features_transcript$transcript_id)]
-  missing_transcript <- rownames(txii$abundance)[which(!rownames(txii$abundance)  %in% features_transcript$transcript_id)]
-  txii$abundance <- txii$abundance [-which(rownames(txii$abundance) %in% missing_transcript),]
+    #remove non-coding transcripts in ensembl 	  
+    rownames(txii$abundance) <-  gsub("\\..*","",rownames(txii$abundance))
+    txii$abundance[which(!rownames(txii$abundance)  %in% features_transcript$transcript_id)]
+    missing_transcript <- rownames(txii$abundance)[which(!rownames(txii$abundance)  %in% features_transcript$transcript_id)]
+    txii$abundance <- txii$abundance [-which(rownames(txii$abundance) %in% missing_transcript),]
   }
-  	  
+  
   xx <- txii$abundance
   transcript.exp <- Biobase::ExpressionSet(log2(xx[,1:length(resFiles)] + 0.001))
   if(features_annotation == "/pfs/downAnnotations/Gencode.v33.annotation.RData" || features_annotation == "/pfs/downAnnotations/Gencode.v33lift37.annotation.RData"){
-  featureNames(transcript.exp) <- gsub("\\|.*","",featureNames(transcript.exp))
-  fData(transcript.exp) <- features_transcript[featureNames(transcript.exp),]
+    featureNames(transcript.exp) <- gsub("\\|.*","",featureNames(transcript.exp))
+    fData(transcript.exp) <- features_transcript[featureNames(transcript.exp),]
   }else{
-  fData(transcript.exp) <- features_transcript[featureNames(transcript.exp),]
+    fData(transcript.exp) <- features_transcript[featureNames(transcript.exp),]
   }
   pData(transcript.exp) <- samples_annotation[sampleNames(transcript.exp),]
   annotation(transcript.exp) <- "isoform"
   
-	  
+  
   if(features_annotation == "/pfs/downAnnotations/Ensembl.v99.annotation.RData"){
-  #remove non-coding transcripts in ensembl
-  rownames(txii$counts) <-  gsub("\\..*","",rownames(txii$counts))
-  txii$counts <- txii$counts [-which(rownames(txii$counts) %in% missing_transcript),]	  
+    #remove non-coding transcripts in ensembl
+    rownames(txii$counts) <-  gsub("\\..*","",rownames(txii$counts))
+    txii$counts <- txii$counts [-which(rownames(txii$counts) %in% missing_transcript),]	  
   }	  
   xx <- txii$counts
   transcript.count <- Biobase::ExpressionSet(log2(xx[,1:length(resFiles)] + 1))
   if(features_annotation == "/pfs/downAnnotations/Gencode.v33.annotation.RData" || features_annotation == "/pfs/downAnnotations/Gencode.v33lift37.annotation.RData"){
-  featureNames(transcript.count) <- gsub("\\|.*","",featureNames(transcript.count))
-  fData(transcript.count) <- features_transcript[featureNames(transcript.count),]
+    featureNames(transcript.count) <- gsub("\\|.*","",featureNames(transcript.count))
+    fData(transcript.count) <- features_transcript[featureNames(transcript.count),]
   }else{
-  fData(transcript.count) <- features_transcript[featureNames(transcript.count),]
+    fData(transcript.count) <- features_transcript[featureNames(transcript.count),]
   }
   pData(transcript.count) <- samples_annotation[sampleNames(transcript.count),]
   annotation(transcript.count) <- "isoform"
-	
-	
+  
+  
   pData(gene.exp)[ ,"batchid"] <- NA
   pData(gene.count)[ ,"batchid"] <- NA	  
   pData(transcript.exp)[ ,"batchid"] <- NA
@@ -458,7 +473,7 @@ rnaseq.sampleinfo <- rnaseq.sampleinfo[which(!rnaseq.sampleinfo$Comment.SUBMITTE
 rownames(rnaseq.sampleinfo) <- rnaseq.sampleinfo$Comment.EGA_RUN.
 rnaseq.sampleinfo$cellid <- matchToIDTable(ids=rnaseq.sampleinfo$Source.Name, tbl=cell.all, column = "GDSC_rnaseq.cellid", returnColumn = "unique.cellid")
 #rnaseq.sampleinfo <- rnaseq.sampleinfo[,c("cellid","Characteristics.organism.part.","Characteristics.disease.","Characteristics.sex.","Scan.Name","Comment.EGA_RUN.")]
-   
+
 for (r in 1:length(tool_path)){
   print(tool_path[r])
   if (length(grep(pattern = 'Kallisto', x = tool_path[r])) > 0){
@@ -479,13 +494,13 @@ for (r in 1:length(tool_path)){
   } else {
     annot = "/pfs/downAnnotations/Ensembl.v99.annotation.RData"
   }
-    print(annot)
+  print(annot)
   
- 
+  
   rnaseq <- summarizeRnaSeq(dir=file.path(paste0("/pfs/", tdir, tool_path[r])),
                             features_annotation=annot,
                             samples_annotation=rnaseq.sampleinfo,
-			    method = rnatool)
+                            method = rnatool)
   rnaseq_results <- c(rnaseq_results,c(
     rnaseq <- setNames(rnaseq,  paste0(tool,".", names(rnaseq)))
   )
@@ -537,11 +552,11 @@ pData(MutationAll)[, "batchid"] <- NA
 
 rnaseq_cellid_all <- pData(rnaseq_results[[1]])[,"cellid"]
 cellnall <- CoreGx::.unionList(rownames(cell.info), 
-					  cnv.cellid, 
-					  rna.cellid, 
-					  mut.cellid,
-		     			  rnaseq_cellid_all,
-		     			  MutationAll$cellid)
+                               cnv.cellid, 
+                               rna.cellid, 
+                               mut.cellid,
+                               rnaseq_cellid_all,
+                               MutationAll$cellid)
 newcells <- setdiff(cellnall, rownames(cell.info))
 newRows <- matrix(NA_character_, nrow=length(newcells), ncol=ncol(cell.info))
 # newRows <- cell.info[newcells,]
@@ -553,21 +568,21 @@ newRows[,"unique.cellid"] <- newcells
 cell.info <- rbind(cell.info, newRows)
 
 collapseRows2 <- function(x, rows){
-    xNew <- lapply(x[rows, ], function(x) {
-      xx <- na.omit(x)
-      if (length(xx) == 0) {
-        xx <- NA
-      }
-      if (length(unique(xx)) > 1) {
-        xx <- paste(xx, collapse="///")
-      } else {xx <- xx[1]}
-      return(as.vector(xx))
-      })
-    xNew <- as.data.frame(xNew, as.is = TRUE)
-    x[rows[1], ] <- xNew
-    x <- x[-rows[-1], ]
-    return(x)
-  }
+  xNew <- lapply(x[rows, ], function(x) {
+    xx <- na.omit(x)
+    if (length(xx) == 0) {
+      xx <- NA
+    }
+    if (length(unique(xx)) > 1) {
+      xx <- paste(xx, collapse="///")
+    } else {xx <- xx[1]}
+    return(as.vector(xx))
+  })
+  xNew <- as.data.frame(xNew, as.is = TRUE)
+  x[rows[1], ] <- xNew
+  x <- x[-rows[-1], ]
+  return(x)
+}
 
 message("Deduplicating Drugs")
 
@@ -575,20 +590,20 @@ message("Deduplicating Drugs")
 drugDupsIDs <- unique(drug.info$unique.drugid[duplicated(drug.info$unique.drugid)])
 
 for(dupID in drugDupsIDs){
-	myx <- which(drug.info$unique.drugid == dupID)
-	drug.info <- collapseRows2(drug.info, myx)
+  myx <- which(drug.info$unique.drugid == dupID)
+  drug.info <- collapseRows2(drug.info, myx)
 }
 rownames(drug.info) <- drug.info$unique.drugid
 
 message("Making Curation Tables")
 
 curationCell <- data.frame(unique.cellid = rownames(cell.info),
-						   GDSC2019.cellid = cell.info$Sample.Name,
-						   CGP.cellid = NA_character_,
-						   GDSC.SNP.cellid = NA_character_,
-						   CGP_EMTAB3610.cellid = NA_character_,
-			  			   GDSC_rnaseq.cellid = NA_character_,
-			  		           GDSC1000.cellid = NA_character_)
+                           GDSC2019.cellid = cell.info$Sample.Name,
+                           CGP.cellid = NA_character_,
+                           GDSC.SNP.cellid = NA_character_,
+                           CGP_EMTAB3610.cellid = NA_character_,
+                           GDSC_rnaseq.cellid = NA_character_,
+                           GDSC1000.cellid = NA_character_)
 rownames(curationCell) <- curationCell$unique.cellid
 
 myx <- match(rownames(curationCell),cell.all$unique.cellid)
@@ -605,23 +620,26 @@ curationTissue <- data.frame("unique.tissueid" = cell.info$tissueid, "GDSC2019.t
 rownames(curationTissue) <- rownames(cell.info)
 
 curationDrug <- data.frame(unique.drugid = drug.info$unique.drugid,
-						   "GDSC2019.drugid" = drug.info$DRUG_NAME)
+                           "GDSC2019.drugid" = drug.info$DRUG_NAME)
 rownames(curationDrug) <- rownames(drug.info)
 
 annot <- geneMap
 rownames(annot) <- annot$gene_id
-#gdsc.u219.ensg <- cgp.u219.ensg
-#annotation(gdsc.u219.ensg) <- "rna"
-#ensemblIds <- sapply(strsplit(rownames(exprs(gdsc.u219.ensg)), "_"), function (x) { return (x[[1]]) }) 
-#fData(gdsc.u219.ensg) <- data.frame("Probe"=rownames(exprs(gdsc.u219.ensg)), 
-                          #"EnsemblGeneId"=ensemblIds,
-                          #"Symbol"=annot[ensemblIds, "gene_name"],
-                          #"GeneBioType"=annot[ensemblIds, "gene_biotype"],
-                          #"BEST"=TRUE)
-#rownames(fData(gdsc.u219.ensg)) <- rownames(exprs(gdsc.u219.ensg))
-#pData(gdsc.u219.ensg)[,"batchid"] <- NA
-#pData(gdsc.u219.ensg)[,"cellid"] <- rna.cellid
 
+if (annotation(microarray_data) == "hgu219hsensgcdf"){
+gdsc.u219.ensg <- cgp.u219.ensg
+annotation(gdsc.u219.ensg) <- "rna"
+ensemblIds <- sapply(strsplit(rownames(exprs(gdsc.u219.ensg)), "_"), function (x) { return (x[[1]]) }) 
+fData(gdsc.u219.ensg) <- data.frame("Probe"=rownames(exprs(gdsc.u219.ensg)), 
+"EnsemblGeneId"=ensemblIds,
+"Symbol"=annot[ensemblIds, "gene_name"],
+"GeneBioType"=annot[ensemblIds, "gene_biotype"],
+"BEST"=TRUE)
+rownames(fData(gdsc.u219.ensg)) <- rownames(exprs(gdsc.u219.ensg))
+pData(gdsc.u219.ensg)[,"batchid"] <- NA
+pData(gdsc.u219.ensg)[,"cellid"] <- rna.cellid
+microarray_data <- gdsc.u219.ensg
+}
 #Compile CNV data
 
 tt <- rownames(pData(cl.eset))
@@ -638,12 +656,12 @@ annotation(cl.eset) <- "cnv"
 
 
 cellsPresent <- sort(CoreGx::.unionList(sens.info$cellid, 
-					  pData(cgp.u133a.ensg)$cellid, 
-					  pData(MutationEset)$cellid,
-					  pData(FusionEset)$cellid,
-					  pData(cl.eset)$cellid,
-		    			  rnaseq_cellid_all,
-			      		  MutationAll$cellid))
+                                        pData(microarray_data)$cellid, 
+                                        pData(MutationEset)$cellid,
+                                        pData(FusionEset)$cellid,
+                                        pData(cl.eset)$cellid,
+                                        rnaseq_cellid_all,
+                                        MutationAll$cellid))
 cell.info <- cell.info[cellsPresent,]
 cell.info$tissueid <- curationTissue[rownames(cell.info), "unique.tissueid"]
 
@@ -678,7 +696,7 @@ if (length(cnv_select) > 0){
   fData(cl.eset)$Symbol <- character()
   annotation(cl.eset) <- "CNV data was not selected for on ORCESTRA"
 }
-		 
+
 if (length(mutation_select) > 0){
   mutation_cells_id <- c(MutationEset$cellid, MutationAll$cellid)
 } else {
@@ -689,7 +707,7 @@ if (length(mutation_select) > 0){
   fData(MutationEset)$BEST <- vector()
   fData(MutationEset)$Symbol <- character()
   annotation(MutationEset) <- "Mutation data was not selected for on ORCESTRA"
-	
+  
   MutationAll <-  ExpressionSet()
   pData(MutationAll)$cellid <- character()
   pData(MutationAll)$batchid <- character()
@@ -697,19 +715,19 @@ if (length(mutation_select) > 0){
   fData(MutationAll)$Symbol <- character()
   annotation(MutationAll) <- "Mutation data was not selected for on ORCESTRA"
 }
-		 
+
 if (length(microarray_select) > 0){
-  microarray_cells_id <- cgp.u133a.ensg$cellid
+  microarray_cells_id <- microarray_data$cellid
 } else {
   microarray_cells_id <- c()
-  cgp.u133a.ensg <- ExpressionSet()
-  pData(cgp.u133a.ensg)$cellid <- character()
-  pData(cgp.u133a.ensg)$batchid <- character()
-  fData(cgp.u133a.ensg)$BEST <- vector()
-  fData(cgp.u133a.ensg)$Symbol <- character()
-  annotation(cgp.u133a.ensg) <- "Microarray data was not selected for on ORCESTRA"
+  microarray_data <- ExpressionSet()
+  pData(microarray_data)$cellid <- character()
+  pData(microarray_data)$batchid <- character()
+  fData(microarray_data)$BEST <- vector()
+  fData(microarray_data)$Symbol <- character()
+  annotation(microarray_data) <- "Microarray data was not selected for on ORCESTRA"
 }
-		 
+
 if (length(fusion_select) > 0){
   fusion_cells_id <- FusionEset$cellid
 } else {
@@ -721,59 +739,59 @@ if (length(fusion_select) > 0){
   fData(FusionEset)$Symbol <- character()
   annotation(FusionEset) <- "Fusion data was not selected for on ORCESTRA"
 }	 
-		 
+
 z <- list()
 
 z <- c(z,c(
   rnaseq_results,
-  "rna"=cgp.u133a.ensg, 
+  "rna"=microarray_data, 
   "mutation"=MutationEset, 
   "mutation_exome"=MutationAll,
   "fusion"=FusionEset, 
   "cnv"=cl.eset
-  )
+)
 )		 
 
 .converteSetToSE <- function(eSets) {
   
   SEfinal <- lapply(eSets,
-         function(eSet){
-             # Change rownames from probes to EnsemblGeneId for rna data type
-             if (grepl("^rna$", Biobase::annotation(eSet))) {
-               rownames(eSet) <- Biobase::fData(eSet)$EnsemblGeneId
-             }
-             
-             # Build summarized experiment from eSet
-             SE <- SummarizedExperiment::SummarizedExperiment(
-               ## TODO:: Do we want to pass an environment for better memory efficiency?
-               assays=S4Vectors::SimpleList(as.list(Biobase::assayData(eSet))
-               ),
-               # Switch rearrange columns so that IDs are first, probes second
-               rowData=S4Vectors::DataFrame(Biobase::fData(eSet),
-                                            rownames=rownames(Biobase::fData(eSet)) 
-               ),
-               colData=S4Vectors::DataFrame(Biobase::pData(eSet),
-                                            rownames=rownames(Biobase::pData(eSet))
-               ),
-               metadata=list("experimentData" = eSet@experimentData, 
-                             "annotation" = Biobase::annotation(eSet), 
-                             "protocolData" = Biobase::protocolData(eSet)
-               )
-             )
-             ## TODO:: Determine if this can be done in the SE constructor?
-             # Extract names from expression set
-             SummarizedExperiment::assayNames(SE) <- Biobase::assayDataElementNames(eSet)
-             mDataType <- Biobase::annotation(eSet)
-             eSets[[mDataType]] <- SE
-         })
+                    function(eSet){
+                      # Change rownames from probes to EnsemblGeneId for rna data type
+                      if (grepl("^rna$", Biobase::annotation(eSet))) {
+                        rownames(eSet) <- Biobase::fData(eSet)$EnsemblGeneId
+                      }
+                      
+                      # Build summarized experiment from eSet
+                      SE <- SummarizedExperiment::SummarizedExperiment(
+                        ## TODO:: Do we want to pass an environment for better memory efficiency?
+                        assays=S4Vectors::SimpleList(as.list(Biobase::assayData(eSet))
+                        ),
+                        # Switch rearrange columns so that IDs are first, probes second
+                        rowData=S4Vectors::DataFrame(Biobase::fData(eSet),
+                                                     rownames=rownames(Biobase::fData(eSet)) 
+                        ),
+                        colData=S4Vectors::DataFrame(Biobase::pData(eSet),
+                                                     rownames=rownames(Biobase::pData(eSet))
+                        ),
+                        metadata=list("experimentData" = eSet@experimentData, 
+                                      "annotation" = Biobase::annotation(eSet), 
+                                      "protocolData" = Biobase::protocolData(eSet)
+                        )
+                      )
+                      ## TODO:: Determine if this can be done in the SE constructor?
+                      # Extract names from expression set
+                      SummarizedExperiment::assayNames(SE) <- Biobase::assayDataElementNames(eSet)
+                      mDataType <- Biobase::annotation(eSet)
+                      eSets[[mDataType]] <- SE
+                    })
   #setNames(pSet@molecularProfiles, names(eSets))
   return(SEfinal)
 }
-		 
+
 z <- .converteSetToSE(z)
-		 
+
 #add cellosaurus disease type to cell-info
-		 
+
 colnames(cell.info)[which(names(cell.info) == "unique.cellid")] <- "cellid"
 disease <- cell_all$Cellosaurus.Disease.Type[match(cell.info$cellid, cell_all$unique.cellid)]
 cell.info$Cellosaurus.Disease.Type <- disease		 
@@ -781,7 +799,7 @@ cell.info$Cellosaurus.Disease.Type <- disease
 #add cellosaurus assession to cell-info
 assession <- cell_all$Cellosaurus.Accession.id[match(cell.info$cellid, cell_all$unique.cellid)]
 cell.info$Cellosaurus.Accession.id <- assession
-		 
+
 #add pharmacodb id to cell-info
 pdb <- cell_all$PharmacoDB.id[match(cell.info$cellid, cell_all$unique.cellid)]
 cell.info$PharmacoDB.id <- pdb
@@ -789,65 +807,65 @@ cell.info$PharmacoDB.id <- pdb
 #add study tissue id to cell_info
 study_tissue <- cell_all$unique.tissueid.fromstudies[match(cell.info$cellid, cell_all$unique.cellid)]
 cell.info$unique.tissueid.fromstudies <- study_tissue
-		 
+
 #add study cell-line type to cell_info
 cell_type <- cell_all$CellLine.Type[match(cell.info$cellid, cell_all$unique.cellid)]
 cell.info$CellLine.Type <- cell_type
-		 
+
 #add metastatic info to cell_info		 
 metastatic <- cell_all$Metastatic[match(cell.info$cellid, cell_all$unique.cellid)]
 cell.info$Metastatic <- metastatic		 
 curationCell <- curationCell[rownames(cell.info),]
 curationTissue <- curationTissue[rownames(cell.info),]
-		 
+
 cells_keep <- unique(c(rnaseq_cellid_all, sens.info$cellid, cnv_cells_id, mutation_cells_id, microarray_cells_id, fusion_cells_id))
-		 
+
 cell.info <- cell.info[cells_keep,]
 curationCell <- curationCell[cells_keep,]
 curationTissue <- curationTissue[cells_keep,]
 
 if (length(standardize) > 0){
-
-# standardize <- standardizeRawDataConcRange(sens.info = sens.info, sens.raw = sens.raw)
-# sens.info <- standardize$sens.info
-# sens.raw <- standardize$sens.raw
-
+  
+  # standardize <- standardizeRawDataConcRange(sens.info = sens.info, sens.raw = sens.raw)
+  # sens.info <- standardize$sens.info
+  # sens.raw <- standardize$sens.raw
+  
 } else {
-print("unfiltered PSet")
-	
+  print("unfiltered PSet")
+  
 }
-	     
-	     
+
+
 GDSC <- PharmacoGx::PharmacoSet(molecularProfiles=z,
-                      name=paste("GDSC", version, sep="_"), 
-                      cell=cell.info, 
-                      drug=drug.info, 
-                      sensitivityInfo=sens.info, 
-                      sensitivityRaw=sens.raw, 
-                      sensitivityProfiles=sens.profiles, 
-                      sensitivityN=NULL, 
-                      curationCell=curationCell, 
-                      curationDrug=curationDrug, 
-                      curationTissue=curationTissue, 
-                      datasetType="sensitivity")
+                                name=paste("GDSC", version, sep="_"), 
+                                cell=cell.info, 
+                                drug=drug.info, 
+                                sensitivityInfo=sens.info, 
+                                sensitivityRaw=sens.raw, 
+                                sensitivityProfiles=sens.profiles, 
+                                sensitivityN=NULL, 
+                                curationCell=curationCell, 
+                                curationDrug=curationDrug, 
+                                curationTissue=curationTissue, 
+                                datasetType="sensitivity")
 
 if (length(standardize) > 0){
-
- noisy_out <- filterNoisyCurves2(GDSC)
- print("filter done")
- GDSC@sensitivity$profiles[noisy_out$noisy, ] <- NA
-
+  
+  noisy_out <- filterNoisyCurves2(GDSC)
+  print("filter done")
+  GDSC@sensitivity$profiles[noisy_out$noisy, ] <- NA
+  
 } else {
-print("unfiltered PSet")
-	
+  print("unfiltered PSet")
+  
 }
-	     
+
 GDSC@annotation$version <- 2		 
 
 saveRDS(GDSC, file=paste0("/pfs/out/GDSC", gsub("v", "",version), ".rds"), version=2)
-		 
+
 dataset <- paste0("GDSC", gsub("v", "",version))
-		 
+
 #output ORCESTRA_ID and Pachyderm commit id
 write.table(dataset, file="/pfs/out/dataset.txt", row.names = F ,quote = F, sep = "\t", col.names = F)
 write.table(ORCESTRA_ID, file="/pfs/out/orcestra_id.txt", row.names = F ,quote = F, sep = "\t", col.names = F)				   
