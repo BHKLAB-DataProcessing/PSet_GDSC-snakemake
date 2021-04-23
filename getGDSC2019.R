@@ -35,8 +35,8 @@ tool_path = paste0(tool_path$a, "_",tool_path$b)
 	  
 print(tool_path)
 
-version <- tail(args, n=3)[1]
-drug_version <- tail(args, n=2)[1]
+version <- head(args)[3]
+drug_version <- head(args)[4]
 print(version)
 print(drug_version)
 
