@@ -264,6 +264,7 @@ if (length(microarray_select) > 0){
     microarray_data <- cgp.u133a.ensg
     
   }, u219 = {
+    rna.cellid <- as.character(matchToIDTable(ids=cgp.u219.ensg@phenoData@data$Characteristics.cell.line., tbl=cell_all, column = "CGP_EMTAB3610.cellid", returnColumn="unique.cellid"))
     microarray_data <- cgp.u219.ensg
     
   })
