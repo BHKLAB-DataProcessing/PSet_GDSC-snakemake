@@ -9,6 +9,7 @@ library(data.table)
 library(reshape2)
 library(CoreGx)
 library(SummarizedExperiment)
+library(biocompute)
 
 options(stringsAsFactors=FALSE)
 print("Retrieving selection")
