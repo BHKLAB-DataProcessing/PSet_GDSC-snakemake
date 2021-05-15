@@ -1225,7 +1225,7 @@ input_subdomain <- data.frame(
                  "Raw Microarray data",
                  "Processed Mutation data",
                  "Sample annotation data",
-                 "Treatment annotations",
+                 "Treatment annotation data",
                  "Raw sensitivity data",
                  "Script for data object generation"),
   "uri" = c(
@@ -1243,7 +1243,7 @@ input_subdomain <- data.frame(
 )
 
 output_subdomain <- data.frame(
-  "mediatype" = c("tar.gz","RDS","RDS","csv", "csv", "csv","csv", "rds","rds","RData","RDS"),
+  "mediatype" = c("tar.gz","RData","RData","csv", "csv", "csv","csv", "RDS","RDS","RData","RDS"),
   "filename" = c("Processed expression data", 
                  "Normalized U133a microarray data",
                  "Normalized U219 microarray data",
