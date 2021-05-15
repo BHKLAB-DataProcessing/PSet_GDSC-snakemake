@@ -873,3 +873,432 @@ write.table(dataset, file="/pfs/out/dataset.txt", row.names = F ,quote = F, sep 
 write.table(ORCESTRA_ID, file="/pfs/out/orcestra_id.txt", row.names = F ,quote = F, sep = "\t", col.names = F)				   
 pach_commit_id <- Sys.getenv("PACH_OUTPUT_COMMIT_ID")
 write.table(pach_commit_id, file="/pfs/out/commit_id.txt", row.names = F ,quote = F, sep = "\t", col.names = F) 
+             
+             
+             
+###CREATE BIOCOMPUTE OBJECT###
+tools <- grep(pattern = 'Kallisto|Salmon', x = rnaseq_select)
+tools <- rnaseq_select[tools]
+tools <- gsub("-", "_", tools)
+				   
+tool <- gsub("\\_.*","", tools)
+version <- gsub(".*_","", tools)
+	     
+if (length(tools) > 1){
+  
+  if (isTRUE(any(duplicated(tool)))){
+    
+    tool_name <- tool[1]
+    version <- c(version[1],version[2])
+    
+    if (tool[1] == "Kallisto" || tool[2] == "Kallisto"){
+      
+      parameter <- "-t"
+      parameter_value <- "2"
+      uri <- rep("https://pachterlab.github.io/kallisto/",2)
+      
+    } else{
+        parameter <- c("-l", "--validateMappings")
+        parameter_value <- c("A", "")
+
+        uri <- rep("https://combine-lab.github.io/salmon/",2)
+    }
+    
+  } else {
+    
+    tool <- c(tool[1], tool[2])
+    v <- version
+    #version <- c(version[1],version[2])
+    if (v[1] == "0.8.2" || v[2] == "0.8.2"){
+      parameter <- c("-t","-l") 
+      parameter_value <- c("2", "A")
+    } else{
+      parameter <- c("-t","-l", "--validateMappings")
+      parameter_value <- c("2", "A","")
+    }
+    uri <- c("https://pachterlab.github.io/kallisto/","https://combine-lab.github.io/salmon/")
+  }
+  
+} else {
+  
+  if (tool == "Kallisto"){
+    
+    parameter <- "-t"
+    parameter_value <- c("2")
+    uri <- "https://pachterlab.github.io/kallisto/"
+  } else{
+    if (version == "0.8.2"){
+      parameter <- paste0("-l")
+      parameter_value <- c("A")
+    } else{
+      parameter <- c("-l", "--validateMappings")
+      parameter_value <- c("A","")
+    }
+    uri <- "https://combine-lab.github.io/salmon/"
+  }
+}
+
+###Selection Transcriptome###
+
+if (transcriptome == "Gencode_v33"){
+  
+  transcriptome_link <- "ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_33/gencode.v33.transcripts.fa.gz"
+  
+} else if (transcriptome == "Gencode_v33lift37"){
+  
+  transcriptome_link <- "ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_23/GRCh37_mapping/gencode.v23lift37.annotation.gtf.gz"
+} else {
+  
+  transcriptome_link <- "ftp://ftp.ensembl.org/pub/release-99/gtf/homo_sapiens/Homo_sapiens.GRCh38.99.gtf.gz"
+}
+
+print(tool)
+print(version)
+print(parameter)
+print(parameter_value)
+print(uri)
+print(transcriptome)
+print(transcriptome_link)
+             
+             
+#dataset version and sensitivity select
+
+version_dataset <- head(args)[3]
+
+if (dataset == "GDSC1"){
+  
+  normalize <- "/pfs/GDSC2019v1Normalize/gdsc_raw_sens_$.rds"
+  process_raw <- "/pfs/gdscRecalculatedv1/*_recomp.rds"
+  profiles <- "/pfs/gdscProfilesV1/profiles.RData"
+  if (drug_version == "8.0"){
+    raw_drug <- "ftp://ftp.sanger.ac.uk/pub/project/cancerrxgene/releases/release-8.0/GDSC1_public_raw_data_17Jul19.csv"
+    
+  } else {
+    raw_drug <- "ftp://ftp.sanger.ac.uk/pub/project/cancerrxgene/releases/release-8.2/GDSC1_public_raw_data_25Feb20.csv"
+    
+  }
+  
+} else {
+  
+  normalize <- "/pfs/GDSC2019v2Normalize/gdsc_raw_sens_$.rds"
+  process_raw <- "/pfs/gdscRecalculatedv2/*_recomp.rds"
+  profiles <- "/pfs/gdscProfilesV2/profiles.RData"
+  
+  if (drug_version == "8.0"){
+    raw_drug <- "ftp://ftp.sanger.ac.uk/pub/project/cancerrxgene/releases/release-8.0/GDSC2_public_raw_data_17Jul19.csv"
+    
+  } else {
+    raw_drug <- "ftp://ftp.sanger.ac.uk/pub/project/cancerrxgene/releases/release-8.2/GDSC2_public_raw_data_25Feb20.csv"
+    
+  }
+  
+  
+}
+             
+###########################
+#####Provenance Domain#####
+###########################
+
+#Created and modified dates
+#Sys.setenv(TZ = "EST")
+created <- as.POSIXct(Sys.time(), format = "%Y-%m-%dT%H:%M:%S", tz = "EST")
+modified <- as.POSIXct(Sys.time(), format = "%Y-%m-%dT%H:%M:%S", tz = "EST")
+
+#Contributions
+contributors <- data.frame(
+  "name" = c("Anthony Mammoliti", "Petr Smirnov", "Benjamin Haibe-Kains"),
+  "affiliation" = c(rep("University Health Network", 3)),
+  "email" = c("anthony.mammoliti@uhnresearch.ca", "petr.smirnov@utoronto.ca", "Benjamin.Haibe-Kains@uhnresearch.ca"),
+  "contribution" = c("createdBy","createdBy","authoredBy"),
+  "orcid" = c(NA,NA,"https://orcid.org/0000-0002-7684-0079"),
+  stringsAsFactors = FALSE
+)
+
+#License
+license <- "https://opensource.org/licenses/Apache-2.0"
+
+#Name of biocompute object
+name <- dataset
+
+#Version of biocompute object
+bio_version <- "1.0.0"
+
+#Embargo (none)
+embargo <- c()
+
+#Derived from and obsolete after (none)
+derived_from <- c()
+obsolete_after <- c()
+
+#reviewers (none)
+review <- c()
+
+#compile domain
+provenance <- compose_provenance_v1.3.0(
+  name, bio_version, review, derived_from, obsolete_after,
+  embargo, created, modified, contributors, license
+)
+provenance %>% convert_json()
+
+
+############################
+#####Description Domain#####
+############################
+times_rnaseq <- as.POSIXct("2020-01-20T1:04:10", format = "%Y-%m-%dT%H:%M:%S", tz = "EST")
+#Keywords and platform info
+keywords <- c("Biomedical", "Pharmacogenomics", "Cellline", "Drug")
+platform <- c("Pachyderm", "ORCESTRA (orcestra.ca)", "Linux/Ubuntu")
+
+#Metadata for each pipeline step
+pipeline_meta <- data.frame(
+  "step_number" = c("1","2","3","4","5"),
+  "name" = c("Expression processing",
+             "Microarray processing",
+             "Curated Sample and treatment identifier compilation",
+             "Drug sensitivity processing",
+             "Build data object"),
+  "description" = c("Pseudoalignment of reads",
+                    "Normalization of microarray data",
+                    "Download of appropriate sample and treatment identifiers from GitHub (curations performed by BHK Lab - http://bhklab.ca)",
+                    "Process sensitivity data",
+                    "Building of ORCESTRA data object"),
+  "version" = c(1.0,1.0,1.0,1.0,1.0),
+  stringsAsFactors = FALSE
+)
+
+#Inputs for each pipeline step
+pipeline_input <- data.frame(
+  "step_number" = c("1","1","2","3","4","4","5","6"),
+  "filename" = c("Raw RNA-seq data",
+                 "Transcriptome",
+                 "Raw Microarray data",
+                 "Processed Mutation data",
+                 "Sample annotation data",
+                 "Treatment annotations",
+                 "Raw sensitivity data",
+                 "Script for data object generation"),
+  "uri" = c(
+    "https://www.ebi.ac.uk/arrayexpress/experiments/E-MTAB-3983/",
+    transcriptome_link,
+    "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3610/",
+    "ftp://ftp.sanger.ac.uk/pub4/cancerrxgene/releases/release-5.0/gdsc_mutation_w5.csv",
+    "https://github.com/BHKLAB-Pachyderm/Annotations/blob/master/cell_annotation_all.csv",
+    "https://github.com/BHKLAB-Pachyderm/Annotations/blob/master/drugs_with_ids.csv",
+    raw_drug,
+    "https://github.com/BHKLAB-Pachyderm/getGDSC/getGDSC2019.R"
+  ),
+  "access_time" = c(times_rnaseq,times_rnaseq,created,created,created,created,created,created),
+  stringsAsFactors = FALSE
+)
+
+
+#Outputs for each pipeline step
+pipeline_output <- data.frame(
+  "step_number" = c("1","2","2","3","3","4","5","5","5","5","6"),
+  "filename" = c("Processed expression data", 
+                 "Normalized U133a microarray data",
+                 "Normalized U219 microarray data",
+                 "Downloaded sample annotations",
+                 "Downloaded treatment annotations",
+                 "Downloaded mutation targeted panel data",
+                 "Downloaded raw sensitivity data",
+                 "Normalized sensitivity data",
+                 "Processed sensitivity data in parallel",
+                 "Compiled sensitivity data",
+                 "Data object"),
+  "uri" = c(
+    "https://orcestradata.blob.core.windows.net/gdsc/GDSC/2019/RNA-seq/",
+    "/pfs/gdscU133a/GDSC_U133a_ENSG.RData",
+    "/pfs/gdscU219/GDSC_U219_ENSG.RData",
+    "/pfs/downAnnotations/cell_annotation_all.csv",
+    "/pfs/gdscMutPanel/gdsc_mutation_w5.csv",
+    "/pfs/downAnnotations/drugs_with_ids.csv",
+    "/pfs/gdscRawSensitivity/GDSC*_public_raw_data*.csv",
+    normalize,
+    process_raw,
+    profiles,
+    paste0("/pfs/out/GDSC", gsub("v", "",version_dataset), ".rds")
+  ),
+  "access_time" = c(times_rnaseq,created,created,created,created,created,created,created, created, created, created),
+  stringsAsFactors = FALSE
+)
+
+#xref (none)
+xref <- c()
+
+#pipeline prereq (none)
+pipeline_prerequisite <- c()
+
+#compile domain
+description <- compose_description_v1.3.0(
+  keywords, xref, platform,
+  pipeline_meta, pipeline_prerequisite, pipeline_input, pipeline_output
+)
+description %>% convert_json()
+
+
+############################
+######Execution Domain######
+############################
+
+script <- c()
+script_driver <- c()
+
+#software/tools and its versions used for data object creation
+software_prerequisites <- data.frame(
+  "name" = c(tool, "Pachyderm", "Docker Image"),
+  "version" = c(version, "1.9.3", "v3"),
+  "uri" = c(
+    uri,
+    "https://www.pachyderm.com", "https://hub.docker.com/r/bhklab/pharmacogx2.0"
+  ),
+  stringsAsFactors = FALSE
+)
+
+software_prerequisites[,"access_time"] <- rep(NA, length(software_prerequisites$name))
+software_prerequisites[,"sha1_chksum"] <- rep(NA, length(software_prerequisites$name))
+
+external_data_endpoints <- c()
+environment_variables <- c()
+
+execution <- compose_execution_v1.3.0(
+  script, script_driver, software_prerequisites, external_data_endpoints, environment_variables
+)
+execution %>% convert_json()
+
+
+############################
+######Extension Domain######
+############################
+
+#repo of scripts/data used
+scm_repository <- data.frame("extension_schema"= c("https://github.com/BHKLAB-Pachyderm"))
+scm_type <- "git"
+scm_commit <- c()
+scm_path <- c()
+scm_preview <- c()
+
+scm <- compose_scm(scm_repository, scm_type, scm_commit, scm_path, scm_preview)
+scm %>% convert_json()
+
+extension <- compose_extension_v1.3.0(scm)
+extension %>% convert_json()
+
+############################
+######Parametric Domain#####
+############################
+
+df_parametric <- data.frame(
+  "param" = parameter,
+  "value" = parameter_value,
+  "step" = c(1),
+  stringsAsFactors = FALSE
+)
+
+parametric <- compose_parametric_v1.3.0(df_parametric)
+parametric %>% convert_json()
+
+
+
+############################
+######Usability Domain######
+############################
+
+#usability of our data objects
+text <- c(
+  paste0("Pipeline for creating ", dataset, " data object through ORCESTRA (orcestra.ca), a platform for the reproducible and transparent processing, sharing, and analysis of biomedical data.")
+)
+
+usability <- compose_usability_v1.3.0(text)
+usability %>% convert_json()
+
+
+######################
+######I/O Domain######
+######################
+
+input_subdomain <- data.frame(
+  "filename" = c("Raw RNA-seq data",
+                 "Transcriptome",
+                 "Raw Microarray data",
+                 "Processed Mutation data",
+                 "Sample annotation data",
+                 "Treatment annotations",
+                 "Raw sensitivity data",
+                 "Script for data object generation"),
+  "uri" = c(
+    "https://www.ebi.ac.uk/arrayexpress/experiments/E-MTAB-3983/",
+    transcriptome_link,
+    "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3610/",
+    "ftp://ftp.sanger.ac.uk/pub4/cancerrxgene/releases/release-5.0/gdsc_mutation_w5.csv",
+    "https://github.com/BHKLAB-Pachyderm/Annotations/blob/master/cell_annotation_all.csv",
+    "https://github.com/BHKLAB-Pachyderm/Annotations/blob/master/drugs_with_ids.csv",
+    raw_drug,
+    "https://github.com/BHKLAB-Pachyderm/getGDSC/getGDSC2019.R"
+  ),
+  "access_time" = c(times_rnaseq,times_rnaseq, created,created, created,created,created,created),
+  stringsAsFactors = FALSE
+)
+
+output_subdomain <- data.frame(
+  "mediatype" = c("tar.gz","RDS","RDS","csv", "csv", "csv","csv", "rds","rds","RData","RDS"),
+  "filename" = c("Processed expression data", 
+                 "Normalized U133a microarray data",
+                 "Normalized U219 microarray data",
+                 "Downloaded sample annotations",
+                 "Downloaded treatment annotations",
+                 "Downloaded mutation targeted panel data",
+                 "Downloaded raw sensitivity data",
+                 "Normalized sensitivity data",
+                 "Processed sensitivity data in parallel",
+                 "Compiled sensitivity data",
+                 "Data object"),
+  "uri" = c(
+    "https://orcestradata.blob.core.windows.net/gdsc/GDSC/2019/RNA-seq/",
+    "/pfs/gdscU133a/GDSC_U133a_ENSG.RData",
+    "/pfs/gdscU219/GDSC_U219_ENSG.RData",
+    "/pfs/downAnnotations/cell_annotation_all.csv",
+    "/pfs/gdscMutPanel/gdsc_mutation_w5.csv",
+    "/pfs/downAnnotations/drugs_with_ids.csv",
+    "/pfs/gdscRawSensitivity/GDSC*_public_raw_data*.csv",
+    normalize,
+    process_raw,
+    profiles,
+    paste0("/pfs/out/GDSC", gsub("v", "",version), ".rds")
+  ),
+  "access_time" = c(times_rnaseq,created,created,created,created,created,created,created,created,created,created),
+  stringsAsFactors = FALSE
+)
+
+io <- compose_io_v1.3.0(input_subdomain, output_subdomain)
+io %>% convert_json()
+
+
+########################
+######Error Domain######
+########################
+
+empirical <- c()
+algorithmic <- c()
+
+error <- compose_error(empirical, algorithmic)
+error %>% convert_json()
+
+
+####Retrieve Top Level Fields####
+tlf <- compose_tlf_v1.3.0(
+  provenance, usability, extension, description,
+  execution, parametric, io, error
+)
+tlf %>% convert_json()
+
+
+####Complete BCO####
+
+bco <- biocompute::compose_v1.3.0(
+  tlf, provenance, usability, extension, description,
+  execution, parametric, io, error
+)
+bco %>% convert_json() %>% export_json(paste0("/pfs/out/GDSC", gsub("v", "",version_dataset), "_BCO",".json")) %>% validate_checksum()
+             
+             
