@@ -1051,9 +1051,10 @@ platform <- c("Pachyderm", "ORCESTRA (orcestra.ca)", "Linux/Ubuntu")
 
 #Metadata for each pipeline step
 pipeline_meta <- data.frame(
-  "step_number" = c("1","2","3","4","5"),
+  "step_number" = c("1","2","3","4","5","6"),
   "name" = c("Expression processing",
              "Microarray processing",
+	     "Mutation filtering",
              "Curated Sample and treatment identifier compilation",
              "Drug sensitivity processing",
              "Build data object"),
@@ -1264,7 +1265,7 @@ output_subdomain <- data.frame(
     normalize,
     process_raw,
     profiles,
-    paste0("/pfs/out/GDSC", gsub("v", "",version), ".rds")
+    paste0("/pfs/out/GDSC", gsub("v", "",version_dataset), ".rds")
   ),
   "access_time" = c(times_rnaseq,created,created,created,created,created,created,created,created,created,created),
   stringsAsFactors = FALSE
