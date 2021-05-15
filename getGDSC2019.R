@@ -1054,16 +1054,17 @@ pipeline_meta <- data.frame(
   "step_number" = c("1","2","3","4","5","6"),
   "name" = c("Expression processing",
              "Microarray processing",
-	     "Mutation filtering",
+             "Mutation filtering",
              "Curated Sample and treatment identifier compilation",
              "Drug sensitivity processing",
              "Build data object"),
   "description" = c("Pseudoalignment of reads",
                     "Normalization of microarray data",
+                    "Filtering of mutation target panel data",
                     "Download of appropriate sample and treatment identifiers from GitHub (curations performed by BHK Lab - http://bhklab.ca)",
                     "Process sensitivity data",
                     "Building of ORCESTRA data object"),
-  "version" = c(1.0,1.0,1.0,1.0,1.0),
+  "version" = c(1.0,1.0,1.0,1.0,1.0,1.0),
   stringsAsFactors = FALSE
 )
 
