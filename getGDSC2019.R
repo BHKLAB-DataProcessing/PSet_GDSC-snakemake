@@ -42,10 +42,9 @@ drug_version <- head(args)[4]
 print(version)
 print(drug_version)
 
-
-
 standardize <- args[grep("filtered", args)]
 
+#standardize drug concentration range function
 standardizeRawDataConcRange <- function(sens.info, sens.raw){
   unq.drugs <- unique(sens.info$drugid)
   
