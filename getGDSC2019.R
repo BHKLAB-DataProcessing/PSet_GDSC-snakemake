@@ -1,4 +1,8 @@
 #!/usr/bin/env Rscript
+if(!require("biocompute", quietly=TRUE)){
+  options(install.packages.compile.from.source = "always")
+  install.packages("biocompute", type="both")
+}
 
 library(PharmacoGx)
 library(data.table)
