@@ -1,9 +1,4 @@
 #!/usr/bin/env Rscript
-if(!require("biocompute", quietly=TRUE)){
-  options(install.packages.compile.from.source = "always")
-  install.packages("biocompute")
-}
-
 library(PharmacoGx)
 library(data.table)
 library(Biobase)
@@ -260,7 +255,7 @@ load(file.path(myDirPrefix, "gdscU133a_normalized/GDSC_U133a_ENSG.RData"))
 load(file.path(myDirPrefix, "gdscU219normalized/GDSC_U219_ENSG.RData"))
 
 if (length(microarray_select) > 0){
-  
+  print(paste("microarray", microarray_v_select))
   switch(microarray_v_select, u133a = {
     cgp.u133a.ensg@phenoData@data$Characteristics.CellLine.[grep("MZ2-MEL.", cgp.u133a.ensg@phenoData@data$Characteristics.CellLine.)] <- c("MZ2-MEL","MZ2-MEL")
     rna.cellid <- as.character(matchToIDTable(ids=cgp.u133a.ensg@phenoData@data$Characteristics.CellLine., tbl=cell_all, column = "CGP.cellid", returnColumn="unique.cellid"))
