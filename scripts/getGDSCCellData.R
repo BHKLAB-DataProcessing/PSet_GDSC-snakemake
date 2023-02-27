@@ -30,7 +30,7 @@ save(celline.gdsc, file = "/pfs/out/celline.gdsc.RData")
 #
 #
 # generateGDSCCell.lines <- function(path.data="/pfs/out",  path.cell = file.path(path.data, "celline"), saveres=file.path("/pfs/out/saveres")){
-#   ftpdir <- "ftp://ftp.ebi.ac.uk//pub/databases/microarray/data/experiment/MTAB/E-MTAB-783/"
+#   # ftpdir <- "ftp://ftp.ebi.ac.uk//pub/databases/microarray/data/experiment/MTAB/E-MTAB-783/"
 #   options(stringsAsFactors=FALSE)
 #   if(!file.exists(path.cell)){
 #     dir.create(path.cell)
@@ -43,9 +43,9 @@ save(celline.gdsc, file = "/pfs/out/celline.gdsc.RData")
 #   em <- "benjamin.haibe.kains@utoronto.ca"
 #   passw <- "princessmargaret"
 #   ## sshpass -p 'princessmargaret' scp -r 'benjamin.haibe.kains@utoronto.ca'@sftp-cancer.sanger.ac.uk:/files/grch38/cosmic/v73/CosmicCLP_MutantExport.tsv.gz dwl
-#
+# 
 #   # system(sprintf("scp -r '%s':'%s'@sftp-cancer.sanger.ac.uk:/files/grch38/cosmic/v73/CosmicCLP_MutantExport.tsv.gz dwl", em, passw))
-#
+# 
 #   ## download cell line annotations and COSMIC IDs
 #   ## annotations from COSMIC cell line project
 #   myfn <- file.path(path.cell, "cosmic_annotations.RData")
@@ -108,7 +108,7 @@ save(celline.gdsc, file = "/pfs/out/celline.gdsc.RData")
 #     rownames(gdsc.celline) <- gdsc.celline[ , "CELL_LINE_NAME"]
 #     save(list=c("gdsc.celline"), compress=TRUE, file=myfn)
 #   } else { load(myfn) }
-#
+# 
 #   ## merge GDSC and COSMIC annotations through COSMIC_ID
 #   message("Merge COSMIC and GDSC annotations for cell lines")
 #   iix <- which(complete.cases(gdsc.celline[ , c("CELL_LINE_NAME", "COSMIC_ID")]) & !is.element(gdsc.celline[ , "COSMIC_ID"], cosmic.celline[ , "ID_sample"]) & !is.element(gdsc.celline[ , "CELL_LINE_NAME"], cosmic.celline[ , "Sample.name"]))
@@ -117,11 +117,11 @@ save(celline.gdsc, file = "/pfs/out/celline.gdsc.RData")
 #   tt[rownames(gdsc.celline)[iix], "Sample.name"] <- gdsc.celline[iix, "CELL_LINE_NAME"]
 #   tt[rownames(gdsc.celline)[iix], "ID_sample"] <- gdsc.celline[iix, "COSMIC_ID"]
 #   celline.gdsc <- tt
-#
+# 
 #   return(celline.gdsc)
-#
+# 
 # }
-#
+# 
 # celline.gdsc <- generateGDSCCell.lines()
-#
+# 
 # save(celline.gdsc, file="/pfs/out/celline.gdsc.RData")
