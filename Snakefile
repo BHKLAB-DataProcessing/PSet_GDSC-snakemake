@@ -74,11 +74,13 @@ rule download_data:
         prefix + "download/" + rna_tool_dir + '.tar.gz',
         prefix + "download/CCLE_mutations.csv",
         prefix + "download/sample_info.csv",
-        prefix + "download/GDSC_molecular.zip"
+        prefix + "download/GDSC_molecular.zip",
+        prefix + "download/gdsc_mutation_w5.csv"
     shell:
         """
         wget '{basePath}/RNA-seq/{rna_tool_dir}.tar.gz' -O {prefix}download/{rna_tool_dir}.tar.gz
         wget '{basePath}/GDSC_molecular.zip' -O {prefix}download/GDSC_molecular.zip
         wget 'https://ndownloader.figshare.com/files/24613355' -O {prefix}download/CCLE_mutations.csv
         wget 'https://ndownloader.figshare.com/files/24613394' -O {prefix}download/sample_info.csv
+        wget ftp://ftp.sanger.ac.uk/pub4/cancerrxgene/releases/release-5.0/gdsc_mutation_w5.csv -O {prefix}download/gdsc_mutation_w5.csv
         """

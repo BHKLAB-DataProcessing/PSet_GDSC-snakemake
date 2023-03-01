@@ -10,9 +10,9 @@ download_dir <- paste0(args[1], "download")
 processsed_dir <- paste0(args[1], "processed")
 version <- args[[2]]
 
-# download_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/download"
-# processed_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/processed"
-# version <- "v1"
+download_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/download"
+processed_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/processed"
+version <- "v1"
 
 switch(
   version, 
@@ -260,11 +260,14 @@ rownames(sens.raw) <- sens.info$exp_id
 
 sens.raw.x <- parallel::splitIndices(nrow(sens.raw), floor(nrow(sens.raw)/1000))
 
-dir.create(file.path(processed_dir, "slices"))
+dir.create(file.path(processed_dir, "slices8_2"))
 
 for(i in seq_along(sens.raw.x)){
 
   slce <- sens.raw[sens.raw.x[[i]],,]
-  saveRDS(slce, file=file.path(processed_dir, "slices", paste0("gdsc_raw_sens_8.2_", i, ".rds")))
+  saveRDS(slce, file=file.path(processed_dir, "slices8_2", paste0("gdsc_raw_sens_8.2_", i, ".rds")))
 
 }
+
+zip(zipfile=file.path(processed_dir, 'raw_sense_slices_8.2.zip'), files=list.files(file.path(processed_dir, 'slices8_2'), full.names = TRUE), extras = '-j')
+unlink(file.path(processed_dir, 'slices8_2'), recursive=TRUE)
