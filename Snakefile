@@ -30,6 +30,25 @@ rule get_pset:
         touch {prefix}gdsc.txt
         """
 
+
+rule download_sensitivity:
+    output:
+        prefix + "download/GDSC1_public_raw_data_17Jul19.csv",
+        prefix + "download/GDSC2_public_raw_data_17Jul19.csv",
+        prefix + "download/GDSC1_public_raw_data_25Feb20.csv",
+        prefix + "download/GDSC2_public_raw_data_25Feb20.csv"
+    shell:
+        """
+        wget ftp://ftp.sanger.ac.uk/pub/project/cancerrxgene/releases/release-8.0/GDSC1_public_raw_data_17Jul19.csv \
+            -O {prefix}download/GDSC1_public_raw_data_17Jul19.csv
+        wget ftp://ftp.sanger.ac.uk/pub/project/cancerrxgene/releases/release-8.0/GDSC2_public_raw_data_17Jul19.csv \
+            -O {prefix}download/GDSC2_public_raw_data_17Jul19.csv
+        wget ftp://ftp.sanger.ac.uk/pub/project/cancerrxgene/releases/release-8.2/GDSC1_public_raw_data_25Feb20.csv \
+            -O {prefix}download/GDSC1_public_raw_data_25Feb20.csv
+        wget ftp://ftp.sanger.ac.uk/pub/project/cancerrxgene/releases/release-8.2/GDSC2_public_raw_data_25Feb20.csv \
+            -O {prefix}download/GDSC2_public_raw_data_25Feb20.csv
+        """
+
 rule download_annotation:
     output:
         prefix + "download/drugs_with_ids.csv",
@@ -46,6 +65,8 @@ rule download_annotation:
             -O {prefix}download/{rna_ref_file}
         wget 'https://github.com/BHKLAB-DataProcessing/Annotations/raw/master/GDSC_rnaseq_meta.txt' \
             -O {prefix}download/GDSC_rnaseq_meta.txt
+        wget 'https://github.com/BHKLAB-DataProcessing/Annotations/raw/master/Ensembl.v99.annotation.RData' \
+            -O {prefix}download/Ensembl.v99.annotation.RData
         """
 
 rule download_data:

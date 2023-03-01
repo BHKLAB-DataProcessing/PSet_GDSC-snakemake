@@ -3,7 +3,7 @@ require(downloader)
 args <- commandArgs(trailingOnly = TRUE)
 download_dir <- paste0(args[1], "download")
 
-download_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/download"
+# download_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/download"
 
 ftpdir <- "ftp://ftp.ebi.ac.uk//pub/databases/microarray/data/experiment/MTAB/E-MTAB-783/"
 myfn <- file.path(download_dir, "celfile_timestamp.RData")
@@ -56,7 +56,7 @@ if (dwl.status != 0) {
 }
 file.copy(from = file.path(download_dir, "dwl", "E-MTAB-783.sdrf.txt"), to = myfn)
 
-zip(zipfile = file.path(download_dir, 'gdsc_array'), files = list.files(path=file.path(download_dir, 'array'), full.names = TRUE))
+zip(zipfile = file.path(download_dir, 'gdsc_array'), files = list.files(path=file.path(download_dir, 'array'), full.names = TRUE),  extras = '-j')
 
 unlink(file.path(download_dir, "dwl"), recursive = T)
 unlink(file.path(download_dir, "array"), recursive = T)
