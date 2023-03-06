@@ -15,33 +15,46 @@ print("Retrieving selection")
 
 myDirPrefix <- "/pfs"
 args = commandArgs(trailingOnly=TRUE)
-rnaseq_select <- args
-print(rnaseq_select)
-rnaseq_results <- list()
-ORCESTRA_ID = tail(rnaseq_select, n=1)
 
+download_dir <- args[1]
+processed_dit <- args[2]
+
+download_dir <- '/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/download'
+processed_dir <- '/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/processed'
+output_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGRAY2017/"
+tools <- "Kallisto-0.46.1"
+transcriptome <- "Gencode_v33"
+version <- 'v1'
+drug_version <- '8.0'
+standardize <- TRUE
+
+# rnaseq_select <- args
+# print(rnaseq_select)
+# ORCESTRA_ID = tail(rnaseq_select, n=1)
+
+rnaseq_results <- list()
 cnv_select <-  grep('cnv', rnaseq_select)
 mutation_select <-  grep('mutation', rnaseq_select)
 microarray_select <-  grep('microarray', rnaseq_select)
 microarray_v_select <- tail(args,n=3)[2]
 fusion_select <-  grep('fusion', rnaseq_select)
 
-tools <- grep(pattern = 'Kallisto|Salmon', x = rnaseq_select)
-tools <- rnaseq_select[tools]
+# tools <- grep(pattern = 'Kallisto|Salmon', x = rnaseq_select)
+# tools <- rnaseq_select[tools]
 tools <- gsub("-", "_", tools)
-transcriptome <- grep(pattern = 'Gencode|Ensembl', x = rnaseq_select)
-transcriptome <- rnaseq_select[transcriptome]
+# transcriptome <- grep(pattern = 'Gencode|Ensembl', x = rnaseq_select)
+# transcriptome <- rnaseq_select[transcriptome]
 tool_path = expand.grid(a = tools,b = transcriptome)
 tool_path = paste0(tool_path$a, "_",tool_path$b)
 
-print(tool_path)
-
-version <- head(args)[3]
-drug_version <- head(args)[4]
+# print(tool_path)
+# 
+# version <- head(args)[3]
+# drug_version <- head(args)[4]
 print(version)
 print(drug_version)
 
-standardize <- args[grep("filtered", args)]
+# standardize <- args[grep("filtered", args)]
 
 #standardize drug concentration range function
 standardizeRawDataConcRange <- function(sens.info, sens.raw){
@@ -223,12 +236,12 @@ switch(drug_version, "8.0" = {
   Name <- "_8.2"
 })
 
-cell_all <- read.csv("/pfs/downAnnotations/cell_annotation_all.csv", na.strings=c("", " ", "NA"))
+cell_all <- read.csv(file.path(download_dir, "cell_annotation_all.csv"), na.strings=c("", " ", "NA"))
 
 message("Loading Sensitivity Data")
 
-sens.info <- readRDS(file=file.path(myDirPrefix, sensFolder, paste0(myInPrefix, "_sens_info", Name,".rds")))
-sens.raw <- readRDS(file=file.path(myDirPrefix, sensFolder, paste0(myInPrefix, "_sens_raw", Name, ".rds")))
+sens.info <- readRDS(file=file.path(processed_dir, paste0(myInPrefix, "_sens_info", Name,".rds")))
+sens.raw <- readRDS(file=file.path(processed_dir, paste0(myInPrefix, "_sens_raw", Name, ".rds")))
 rownames(sens.info) <- sens.info$exp_id
 rownames(sens.raw) <- sens.info$exp_id
 
@@ -243,7 +256,7 @@ rownames(sens.raw) <- sens.info$exp_id
 
 # sens.profiles <- cbind(data.frame("AAC" = sens.recalc$AUC, "IC50" = sens.recalc$IC50), sens.pars)
 
-load(file.path(myDirPrefix, profFolder,  paste0("profiles",Name,".RData")))
+load(file.path(processed_dir,  paste0("profiles",Name,".RData")))
 
 sens.profiles <- res
 
@@ -251,8 +264,8 @@ sens.profiles <- sens.profiles[rownames(sens.info),]
 
 message("Loading RNA Data")
 
-load(file.path(myDirPrefix, "gdscU133a_normalized/GDSC_U133a_ENSG.RData"))
-load(file.path(myDirPrefix, "gdscU219normalized/GDSC_U219_ENSG.RData"))
+load(file.path(processed_dir, "GDSC_U133a_ENSG.RData"))
+load(file.path(processed_dir, "GDSC_U219_ENSG.RData"))
 
 if (length(microarray_select) > 0){
   print(paste("microarray", microarray_v_select))
@@ -270,14 +283,14 @@ if (length(microarray_select) > 0){
 } 
 
 
-cell.all <- read.csv(file.path(myDirPrefix, "downAnnotations/cell_annotation_all.csv"))
+cell.all <- read.csv(file.path(download_dir, "cell_annotation_all.csv"))
 
 
 message("Loading CNV Data")
 
 
 #load(file.path(myDirPrefix, "gdscCNA/GDSC_eset.RData"))
-cl.eset <- readRDS("/pfs/gdsc_cnv_new/GDSC_CN.gene.RDS")
+cl.eset <- readRDS(file.path(processed_dir, "GDSC_CN.gene.RDS"))
 y <- ExpressionSet(cl.eset@assayData$exprs) #remove other assays for now (nAraw, nBraw, nMajor, nMinor, TCN), as SummarizeMolecularProfiles does not support multi-assays
 pData(y) <- cl.eset@phenoData@data
 cl.eset <- y
@@ -299,7 +312,7 @@ cnv.cellid <- as.character(matchToIDTable(ids=cl.eset$GDSC.cellid, tbl=cell.all,
 message("Loading Mutation/fusion Data")
 
 
-mut.matrix <- read.csv(file.path(myDirPrefix, "gdscMutPanel/gdsc_mutation_w5.csv"))
+mut.matrix <- read.csv(file.path(download_dir, "gdsc_mutation_w5.csv"))
 
 mut.cellid <- matchToIDTable(ids=mut.matrix[,1], tbl=cell.all, column="CGP.cellid", returnColumn = "unique.cellid")
 
@@ -323,7 +336,7 @@ MutationEset <- ExpressionSet(t(mutation))
 
 colnames(MutationEset) <- mut.cellid
 
-load("/pfs/downAnnotations/Ensembl.v99.annotation.RData")
+load(file.path(download_dir, "Ensembl.v99.annotation.RData"))
 geneMap <- features_gene
 
 geneInfoM <- geneMap[na.omit(match(rownames(MutationEset),geneMap[ , "gene_name"]) ), c("gene_id", "gene_name", "gene_biotype")] 
@@ -368,12 +381,11 @@ pData(FusionEset)[, "batchid"] <- NA
 message("Loading Cell and Drug Info")
 
 
-load(file.path(myDirPrefix, paste0("gdsc1000CellInfo/","cellInfo", Name,".RData")))
-load(file.path(myDirPrefix, paste0("gdscDrugInfo/","drugInfo", Name,".RData")))
+load(file.path(processed_dir, paste0("cellInfo", Name,".RData")))
+load(file.path(processed_dir, paste0("drugInfo", Name,".RData")))
 
 
 rownames(cell.info) <- cell.info$unique.cellid
-
 
 summarizeRnaSeq <- function (dir, 
                              features_annotation,
@@ -397,7 +409,7 @@ summarizeRnaSeq <- function (dir,
   length(resFiles)
   names(resFiles) <- basename(dirname(resFiles))
   
-  if(features_annotation == "/pfs/downAnnotations/Ensembl.v99.annotation.RData"){
+  if(features_annotation == file.path(download_dir, "Ensembl.v99.annotation.RData")){
     txi <- tximport(resFiles, type=method, tx2gene=tx2gene, ignoreAfterBar = TRUE, ignoreTxVersion = TRUE)
   } else{
     txi <- tximport(resFiles, type=method, tx2gene=tx2gene, ignoreAfterBar = TRUE, ignoreTxVersion = FALSE)	  
@@ -420,7 +432,7 @@ summarizeRnaSeq <- function (dir,
   
   txii <- tximport(resFiles, type=method, txOut=T)
   
-  if(features_annotation == "/pfs/downAnnotations/Ensembl.v99.annotation.RData"){
+  if(features_annotation == file.path(download_dir, "Ensembl.v99.annotation.RData")){
     #remove non-coding transcripts in ensembl 	  
     rownames(txii$abundance) <-  gsub("\\..*","",rownames(txii$abundance))
     txii$abundance[which(!rownames(txii$abundance)  %in% features_transcript$transcript_id)]
@@ -430,7 +442,7 @@ summarizeRnaSeq <- function (dir,
   
   xx <- txii$abundance
   transcript.exp <- Biobase::ExpressionSet(log2(xx[,1:length(resFiles)] + 0.001))
-  if(features_annotation == "/pfs/downAnnotations/Gencode.v33.annotation.RData" || features_annotation == "/pfs/downAnnotations/Gencode.v33lift37.annotation.RData"){
+  if(features_annotation == file.path(download_dir, "Gencode.v33.annotation.RData") || features_annotation == file.path(download_dir, "Gencode.v33lift37.annotation.RData")){
     featureNames(transcript.exp) <- gsub("\\|.*","",featureNames(transcript.exp))
     fData(transcript.exp) <- features_transcript[featureNames(transcript.exp),]
   }else{
@@ -440,14 +452,14 @@ summarizeRnaSeq <- function (dir,
   annotation(transcript.exp) <- "isoform"
   
   
-  if(features_annotation == "/pfs/downAnnotations/Ensembl.v99.annotation.RData"){
+  if(features_annotation == file.path(download_dir, "Ensembl.v99.annotation.RData")){
     #remove non-coding transcripts in ensembl
     rownames(txii$counts) <-  gsub("\\..*","",rownames(txii$counts))
     txii$counts <- txii$counts [-which(rownames(txii$counts) %in% missing_transcript),]	  
   }	  
   xx <- txii$counts
   transcript.count <- Biobase::ExpressionSet(log2(xx[,1:length(resFiles)] + 1))
-  if(features_annotation == "/pfs/downAnnotations/Gencode.v33.annotation.RData" || features_annotation == "/pfs/downAnnotations/Gencode.v33lift37.annotation.RData"){
+  if(features_annotation == file.path(download_dir, "Gencode.v33.annotation.RData") || features_annotation == file.path(download_dir, "Gencode.v33lift37.annotation.RData")){
     featureNames(transcript.count) <- gsub("\\|.*","",featureNames(transcript.count))
     fData(transcript.count) <- features_transcript[featureNames(transcript.count),]
   }else{
@@ -468,7 +480,7 @@ summarizeRnaSeq <- function (dir,
               "isoforms.counts"=transcript.count))
 }
 
-rnaseq.sampleinfo <- read.csv("/pfs/downAnnotations/GDSC_rnaseq_meta.txt", sep="\t")
+rnaseq.sampleinfo <- read.csv(file.path(download_dir, "GDSC_rnaseq_meta.txt"), sep="\t")
 rnaseq.sampleinfo <- rnaseq.sampleinfo[which(!rnaseq.sampleinfo$Comment.SUBMITTED_FILE_NAME. == "15552_5.cram"),]
 rownames(rnaseq.sampleinfo) <- rnaseq.sampleinfo$Comment.EGA_RUN.
 rnaseq.sampleinfo$cellid <- matchToIDTable(ids=rnaseq.sampleinfo$Source.Name, tbl=cell.all, column = "GDSC_rnaseq.cellid", returnColumn = "unique.cellid")
@@ -478,26 +490,26 @@ for (r in 1:length(tool_path)){
   print(tool_path[r])
   if (length(grep(pattern = 'Kallisto', x = tool_path[r])) > 0){
     tool <- sub("(_[^_]+)_.*", "\\1", tool_path[r])
-    tdir = paste0("gdsc_rnaseq_",gsub(".","_",tolower(tool), fixed = T), "/",  tool, "/", tool, "/")  
+    # tdir = paste0("gdsc_rnaseq_",gsub(".","_",tolower(tool), fixed = T), "/",  tool, "/", tool, "/")  
     rnatool="kallisto"	  
   } else {
     tool <- sub("(_[^_]+)_.*", "\\1", tool_path[r])
-    tdir = paste0("gdsc_rnaseq_",gsub(".","_",tolower(tool), fixed = T), "/",  tool, "/", tool, "/")
+    # tdir = paste0("gdsc_rnaseq_",gsub(".","_",tolower(tool), fixed = T), "/",  tool, "/", tool, "/")
     rnatool="salmon"	  
   }
   
   
   if (length(grep(pattern = 'lift37', x = tool_path[r])) > 0){
-    annot = "/pfs/downAnnotations/Gencode.v33lift37.annotation.RData"
+    annot = file.path(download_dir, "Gencode.v33lift37.annotation.RData")
   } else if (length(grep(pattern = 'v33', x = tool_path[r])) > 0){
-    annot = "/pfs/downAnnotations/Gencode.v33.annotation.RData"
+    annot = file.path(download_dir, "Gencode.v33.annotation.RData")
   } else {
-    annot = "/pfs/downAnnotations/Ensembl.v99.annotation.RData"
+    annot = file.path(download_dir, "Ensembl.v99.annotation.RData")
   }
   print(annot)
   
   
-  rnaseq <- summarizeRnaSeq(dir=file.path(paste0("/pfs/", tdir, tool_path[r])),
+  rnaseq <- summarizeRnaSeq(dir=file.path(processed_dir, tool, tool_path),
                             features_annotation=annot,
                             samples_annotation=rnaseq.sampleinfo,
                             method = rnatool)
@@ -510,7 +522,7 @@ for (r in 1:length(tool_path)){
 message("Compile All GDSC Mutation Data")
 
 ######### Loading ALL exome data #########
-mutation_raw <- read.csv("/pfs/gdscmutation_all/mutations_latest.csv", na.strings=c("", " ", "NA"))
+mutation_raw <- read.csv(file.path(processed_dir, "mutations_latest.csv"), na.strings=c("", " ", "NA"))
 mutation_raw <- mutation_raw[,c("gene_symbol","protein_mutation","model_name","cancer_driver")]
 mutation_raw <- mutation_raw[which(mutation_raw$cancer_driver=="True"),]
 cells_matched <- matchToIDTable(ids = mutation_raw[,3], tbl = cell.all, column = "GDSC.SNP.cellid", returnColumn = "unique.cellid")
@@ -670,7 +682,7 @@ drugsPresent <- sort(unique(sens.info$drugid))
 drug.info <- drug.info[drugsPresent,]
 
 
-drug_all <- read.csv("/pfs/downAnnotations/drugs_with_ids.csv", na.strings=c("", " ", "NA"))
+drug_all <- read.csv(file.path(download_dir, "drugs_with_ids.csv"), na.strings=c("", " ", "NA"))
 drug_all <- drug_all[which(!is.na(drug_all[ , "GDSC2019.drugid"])),]
 drug_all <- drug_all[ , c("unique.drugid", "GDSC2019.drugid","smiles","inchikey","cid","FDA")]
 rownames(drug_all) <- drug_all[ , "unique.drugid"]
@@ -824,11 +836,11 @@ cell.info <- cell.info[cells_keep,]
 curationCell <- curationCell[cells_keep,]
 curationTissue <- curationTissue[cells_keep,]
 
-if (length(standardize) > 0){
+if (standardize){
   
-  # standardize <- standardizeRawDataConcRange(sens.info = sens.info, sens.raw = sens.raw)
-  # sens.info <- standardize$sens.info
-  # sens.raw <- standardize$sens.raw
+  standardize <- standardizeRawDataConcRange(sens.info = sens.info, sens.raw = sens.raw)
+  sens.info <- standardize$sens.info
+  sens.raw <- standardize$sens.raw
   
 } else {
   print("unfiltered PSet")

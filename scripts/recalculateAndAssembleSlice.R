@@ -5,8 +5,8 @@ args <- commandArgs(trailingOnly = TRUE)
 processed_dir <- paste0(args[1], "processed")
 sens_version <- args[2]
 
-processed_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/processed"
-sens_version <- "8.2"
+# processed_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/processed"
+# sens_version <- "8.2"
 
 slices_dir <- file.path(processed_dir, paste0('slices', str_replace(sens_version, '\\.', '_')))
 dir.create(slices_dir)
