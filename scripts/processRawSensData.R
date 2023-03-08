@@ -56,8 +56,8 @@ gdsc_sens[,Viability := {
 # 	Viability <- (INTENSITY - background)/(control-background)
 # 	list(Viability = Viability)}, .(MASTER_CELL_ID, BARCODE) ]
 
-load(file.path(processed_dir, "drugInfo.RData"))
-load(file.path(processed_dir, "cellInfo.RData"))
+load(file.path(processed_dir, "drugInfo_8.0.RData"))
+load(file.path(processed_dir, "cellInfo_8.0.RData"))
 
 gdsc_sens[,drugid := ..drug.info[match(DRUG_ID, ..drug.info$DRUG_ID), "unique.drugid"]]
 gdsc_sens[,cellid := ..cell.info[match(COSMIC_ID, ..cell.info$COSMIC.identifier), "unique.cellid"]]
@@ -124,8 +124,8 @@ gdsc_info <- unique(gdsc_info)
 gdsc_info <- as.data.frame(gdsc_info)
 
 
-saveRDS(gdsc_info, file=paste0(myOutPrefix, "_sens_info.rds"))
-saveRDS(gdsc_raw, file=paste0(myOutPrefix, "_sens_raw.rds"))
+saveRDS(gdsc_info, file=paste0(myOutPrefix, "_sens_info_8.0.rds"))
+saveRDS(gdsc_raw, file=paste0(myOutPrefix, "_sens_raw_8.0.rds"))
 
 
 sens.info <- gdsc_info

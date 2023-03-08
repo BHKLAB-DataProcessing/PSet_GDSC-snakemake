@@ -19,7 +19,7 @@ cell.all <- read.csv(file.path(download_dir, "cell_annotation_all.csv"), na.stri
 
 
 cell.info$unique.cellid <- cell.all[match(cell.info[, "Sample.Name"], cell.all[, "GDSC1000.cellid"]), "unique.cellid"]
-save(cell.info, file = file.path(processed_dir, "cellInfo.RData"))
+save(cell.info, file = file.path(processed_dir, "cellInfo_8.0.RData"))
 
 # ver 8.2 cell data (Feb 2020)
 cell.info <- as.data.frame(read_excel(myfn2, sheet = 1, .name_repair = make.names))

@@ -1,12 +1,11 @@
 require(downloader)
 options(timeout = 600)
 args <- commandArgs(trailingOnly = TRUE)
-download_dir <- paste0(args[1], "download")
+download_dir <- paste0(args[1], "microarray")
 
 # download_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/download"
 
 ftpdir <- "ftp://ftp.ebi.ac.uk//pub/databases/microarray/data/experiment/MTAB/E-MTAB-783/"
-myfn <- file.path(download_dir, "celfile_timestamp.RData")
 
 message("Download genomic data")
 
@@ -48,7 +47,7 @@ write.csv(celfile.timestamp, file = file.path(download_dir, "celfile_timestamp_u
 
 ## download sample information
 message("Download sample information")
-myfn <- file.path(download_dir, "gdsc_ge_sampleinfo.txt")
+myfn <- file.path(download_dir, "gdsc_ge_sampleinfo_u133a.txt")
 dir.create(file.path(download_dir, "dwl"), showWarnings = FALSE, recursive = TRUE)
 dwl.status <- download.file(url = sprintf("%s/E-MTAB-783.sdrf.txt", ftpdir), destfile = file.path(download_dir, "dwl", "E-MTAB-783.sdrf.txt"), quiet = TRUE)
 if (dwl.status != 0) {

@@ -1,7 +1,7 @@
 library("downloader")
 
 args <- commandArgs(trailingOnly = TRUE)
-download_dir <- paste0(args[1], "download")
+download_dir <- paste0(args[1], "microarray")
 
 # download_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/download"
 
@@ -12,8 +12,8 @@ dir.create(file.path(download_dir, "array"), showWarnings = FALSE, recursive = T
 ftpdir <- "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3610/"
 
 ## phenodata
-dwl.status <- download(url = sprintf("%s/E-MTAB-3610.sdrf.txt", ftpdir), destfile = file.path(download_dir, "E-MTAB-3610.sdrf.txt"), quiet = TRUE)
-sampleinfo <- read.csv(file.path(download_dir, "E-MTAB-3610.sdrf.txt"), sep = "\t", stringsAsFactors = FALSE)
+dwl.status <- download(url = sprintf("%s/E-MTAB-3610.sdrf.txt", ftpdir), destfile = file.path(download_dir, "gdsc_ge_sampleinfo_u219.txt"), quiet = TRUE)
+sampleinfo <- read.csv(file.path(download_dir, "gdsc_ge_sampleinfo_u219.txt"), sep = "\t", stringsAsFactors = FALSE)
 rownames(sampleinfo) <- sampleinfo[, "Assay.Name"]
 sampleinfo[, "Array.Data.File"] <- gsub("[.]cel$", ".CEL.gz", sampleinfo[, "Array.Data.File"])
 uarchive <- sort(unique(sampleinfo[, "Comment..ArrayExpress.FTP.file."]))
@@ -50,11 +50,7 @@ celfile.timestamp <- t(sapply(strsplit(celfile.timestamp, split = " "), function
 }))
 dimnames(celfile.timestamp) <- list(gsub("[.]CEL$", "", celfn), c("file.day", "file.hour"))
 write.csv(celfile.timestamp, file = file.path(download_dir, "celfile_timestamp_u219.csv"))
-save(list = c("celfile.timestamp"), compress = TRUE, file = file.path(download_dir, "celfile_timestamp_u219.RData"))
-
-ftpdir <- "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/MTAB/E-MTAB-3610/"
-## phenodata
-dwl.status <- download(url = sprintf("%s/E-MTAB-3610.sdrf.txt", ftpdir), destfile = file.path(download_dir, "E-MTAB-3610.sdrf.txt"), quiet = TRUE)
+# save(list = c("celfile.timestamp"), compress = TRUE, file = file.path(download_dir, "celfile_timestamp_u219.RData"))
 
 zip(zipfile = file.path(download_dir, "gdsc_array_u219"), files = list.files(path = file.path(download_dir, "array"), full.names = TRUE), extras = "-j")
 

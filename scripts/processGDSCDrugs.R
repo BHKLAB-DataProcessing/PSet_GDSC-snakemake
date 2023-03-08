@@ -20,7 +20,7 @@ drug.all <- read.csv(file.path(download_dir, "drugs_with_ids.csv"), na.strings =
 
 # ver 8.0 drug annotations (July 2019)
 drug.info$unique.drugid <- matchToIDTable(ids = drug.info[, "DRUG_NAME"], tbl = drug.all, column = "GDSC2019.drugid", returnColumn = "unique.drugid")
-save(drug.info, file = file.path(processed_dir, "drugInfo.RData"))
+save(drug.info, file = file.path(processed_dir, "drugInfo_8.0.RData"))
 
 # ver 8.2 drug annotations (Feb 2020)
 drug.info <- read.csv(myfn2)

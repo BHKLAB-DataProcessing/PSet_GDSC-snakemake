@@ -32,12 +32,13 @@ microarray_v_select <- "u133a"
 # print(rnaseq_select)
 # ORCESTRA_ID = tail(rnaseq_select, n=1)
 
-rnaseq_results <- list()
 cnv_select <- grep("cnv", rnaseq_select)
 mutation_select <- grep("mutation", rnaseq_select)
 microarray_select <- grep("microarray", rnaseq_select)
-microarray_v_select <- tail(args, n = 3)[2]
 fusion_select <- grep("fusion", rnaseq_select)
+# microarray_v_select <- tail(args, n = 3)[2]
+
+rnaseq_results <- list()
 
 # tools <- grep(pattern = 'Kallisto|Salmon', x = rnaseq_select)
 # tools <- rnaseq_select[tools]
@@ -243,7 +244,7 @@ switch(version,
 
 switch(drug_version,
   "8.0" = {
-    Name <- ""
+    Name <- "_8.0"
   },
   "8.2" = {
     Name <- "_8.2"
@@ -277,20 +278,18 @@ sens.profiles <- res
 sens.profiles <- sens.profiles[rownames(sens.info), ]
 
 message("Loading RNA Data")
-
-load(file.path(processed_dir, "GDSC_U133a_ENSG.RData"))
-load(file.path(processed_dir, "GDSC_U219_ENSG.RData"))
-
 if (length(microarray_select) > 0) {
   print(paste("microarray", microarray_v_select))
   switch(microarray_v_select,
     u133a = {
+      load(file.path(processed_dir, "GDSC_u133a_ENSG.RData"))
       cgp.u133a.ensg@phenoData@data$Characteristics.CellLine.[grep("MZ2-MEL.", cgp.u133a.ensg@phenoData@data$Characteristics.CellLine.)] <- c("MZ2-MEL", "MZ2-MEL")
       rna.cellid <- as.character(matchToIDTable(ids = cgp.u133a.ensg@phenoData@data$Characteristics.CellLine., tbl = cell_all, column = "CGP.cellid", returnColumn = "unique.cellid"))
       pData(cgp.u133a.ensg)[, "cellid"] <- rna.cellid
       microarray_data <- cgp.u133a.ensg
     },
     u219 = {
+      load(file.path(processed_dir, "GDSC_u219_ENSG.RData"))
       rna.cellid <- as.character(matchToIDTable(ids = cgp.u219.ensg@phenoData@data$Characteristics.cell.line., tbl = cell_all, column = "CGP_EMTAB3610.cellid", returnColumn = "unique.cellid"))
       microarray_data <- cgp.u219.ensg
     }
@@ -542,7 +541,7 @@ for (r in 1:length(tool_path)) {
 message("Compile All GDSC Mutation Data")
 
 ######### Loading ALL exome data #########
-mutation_raw <- read.csv(file.path(processed_dir, "mutations_latest.csv"), na.strings = c("", " ", "NA"))
+mutation_raw <- read.csv(file.path(download_dir, "mutations_latest.csv"), na.strings = c("", " ", "NA"))
 mutation_raw <- mutation_raw[, c("gene_symbol", "protein_mutation", "model_name", "cancer_driver")]
 mutation_raw <- mutation_raw[which(mutation_raw$cancer_driver == "True"), ]
 cells_matched <- matchToIDTable(ids = mutation_raw[, 3], tbl = cell.all, column = "GDSC.SNP.cellid", returnColumn = "unique.cellid")

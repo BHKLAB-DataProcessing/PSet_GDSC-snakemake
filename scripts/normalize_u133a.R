@@ -4,7 +4,7 @@ library(PharmacoGx)
 options(stringsAsFactors = FALSE)
 
 args <- commandArgs(trailingOnly = TRUE)
-download_dir <- paste0(args[1], "download")
+download_dir <- paste0(args[1], "microarray")
 processsed_dir <- paste0(args[1], "processed")
 
 # download_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/download"
@@ -13,7 +13,7 @@ processsed_dir <- paste0(args[1], "processed")
 load(file.path(processed_dir, "celline.gdsc.RData"))
 celline <- celline.gdsc
 
-celfile.timestamp <- read.csv(file.path(download_dir, "celfile_timestamp.csv"), row.names = 1)
+celfile.timestamp <- read.csv(file.path(download_dir, "celfile_timestamp_u133a.csv"), row.names = 1)
 
 file.paths <- file.path(download_dir, c(
   list.files(pattern = "^hthgu133ahsensg*", path = download_dir),
@@ -47,7 +47,7 @@ install.packages(file.paths, repos = NULL, type = "source")
   }
 
 dir.create(file.path(download_dir, 'gdsc_array'))
-unzip(file.path(download_dir, 'gdsc_array.zip'), exdir = file.path(download_dir, 'gdsc_array'))
+unzip(file.path(download_dir, 'gdsc_array_u133a.zip'), exdir = file.path(download_dir, 'gdsc_array'))
 celfn <- list.celfiles(file.path(download_dir, 'gdsc_array'), full.names = TRUE)
 celfns <- list.celfiles(file.path(download_dir, 'gdsc_array'), full.names = FALSE)
 ## experiments' names
@@ -57,7 +57,7 @@ chipt <- sapply(celfn, celfileChip)
 chipd <- t(sapply(celfn, celfileDateHour))
 
 message("Read sample information")
-sampleinfo <- read.csv(file.path(download_dir, "gdsc_ge_sampleinfo.txt"), sep = "\t")
+sampleinfo <- read.csv(file.path(download_dir, "gdsc_ge_sampleinfo_u133a.txt"), sep = "\t")
 sampleinfo[sampleinfo == "" | sampleinfo == " "] <- NA
 ## curate cell line names
 sampleinfo[sampleinfo[, "Source.Name"] == "MZ2-MEL.", "Source.Name"] <- "MZ2-MEL"
@@ -137,6 +137,6 @@ pData(eset)[, "batchid"] <- NA
 annotation(eset) <- "rna"
 
 cgp.u133a.ensg <- eset
-save(cgp.u133a.ensg, compress = TRUE, file = file.path(processed_dir, "GDSC_U133a_ENSG.RData"))
+save(cgp.u133a.ensg, compress = TRUE, file = file.path(processed_dir, "GDSC_u133a_ENSG.RData"))
 
 unlink(file.path(download_dir, 'gdsc_array'), recursive = T)
