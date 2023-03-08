@@ -1,10 +1,10 @@
-library("readxl")
+# library("readxl")
 require(downloader)
 options(stringsAsFactors = FALSE)
 
-args = commandArgs(trailingOnly=TRUE)
+args <- commandArgs(trailingOnly = TRUE)
 download_dir <- paste0(args[1], "download")
-processsed_dir <- paste0(args[1], "processed")
+# processsed_dir <- paste0(args[1], "processed")
 
 # download_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/download"
 # processed_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/processed"
@@ -34,25 +34,25 @@ if (dwl.status != 0) {
 }
 
 
-# require(gdata)
-# ver 8.0 cell data (July 2019)
-cell.info <- as.data.frame(read_excel(myfn, sheet = 1, .name_repair = make.names))
-cell.info <- cell.info[-nrow(cell.info), ]
-## Last row is a total summation row
+# # require(gdata)
+# # ver 8.0 cell data (July 2019)
+# cell.info <- as.data.frame(read_excel(myfn, sheet = 1, .name_repair = make.names))
+# cell.info <- cell.info[-nrow(cell.info), ]
+# ## Last row is a total summation row
 
-cell.all <- read.csv(file.path(download_dir, "cell_annotation_all.csv"), na.strings = c("", " ", "NA"))
-
-
-cell.info$unique.cellid <- cell.all[match(cell.info[, "Sample.Name"], cell.all[, "GDSC1000.cellid"]), "unique.cellid"]
-save(cell.info, file = file.path(processed_dir, "cellInfo.RData"))
+# cell.all <- read.csv(file.path(download_dir, "cell_annotation_all.csv"), na.strings = c("", " ", "NA"))
 
 
+# cell.info$unique.cellid <- cell.all[match(cell.info[, "Sample.Name"], cell.all[, "GDSC1000.cellid"]), "unique.cellid"]
+# save(cell.info, file = file.path(processed_dir, "cellInfo.RData"))
 
-# ver 8.2 cell data (Feb 2020)
-cell.info <- as.data.frame(read_excel(myfn2, sheet = 1, .name_repair = make.names))
-cell.info <- cell.info[-nrow(cell.info), ]
-cell.info$unique.cellid <- cell.all[match(cell.info[, "Sample.Name"], cell.all[, "GDSC1000.cellid"]), "unique.cellid"]
-save(cell.info, file = file.path(processed_dir, "cellInfo_8.2.RData"))
+
+
+# # ver 8.2 cell data (Feb 2020)
+# cell.info <- as.data.frame(read_excel(myfn2, sheet = 1, .name_repair = make.names))
+# cell.info <- cell.info[-nrow(cell.info), ]
+# cell.info$unique.cellid <- cell.all[match(cell.info[, "Sample.Name"], cell.all[, "GDSC1000.cellid"]), "unique.cellid"]
+# save(cell.info, file = file.path(processed_dir, "cellInfo_8.2.RData"))
 
 # cellcuration <- cell_all[,c("CGP.cellid", "GDSC.SNP.cellid", "CGP_EMTAB3610.cellid", "unique.cellid")]
 # EMTAB3610_matches <- match(toupper(gsub(pattern=badchars, "", x=cell.info$Sample.Name)), toupper(gsub(pattern=badchars, "", x=cellcuration[,"CGP_EMTAB3610.cellid"])))

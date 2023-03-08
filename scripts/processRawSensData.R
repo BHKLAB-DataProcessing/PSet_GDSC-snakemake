@@ -10,9 +10,9 @@ download_dir <- paste0(args[1], "download")
 processsed_dir <- paste0(args[1], "processed")
 version <- args[[2]]
 
-download_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/download"
-processed_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/processed"
-version <- "v1"
+# download_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/download"
+# processed_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/processed"
+# version <- "v1"
 
 switch(
   version, 

@@ -1,5 +1,5 @@
 require(downloader)
-
+options(timeout = 600)
 args <- commandArgs(trailingOnly = TRUE)
 download_dir <- paste0(args[1], "download")
 
@@ -30,10 +30,10 @@ while (i <= 9) {
     fff <- unzip(zipfile = file.path(download_dir, "dwl", sprintf("E-MTAB-783.raw.%i.zip", i)), list = TRUE)
     celfile.timestamp <- c(celfile.timestamp, as.character(fff[, "Date"]))
     celfn <- c(celfn, as.character(fff[, "Name"]))
-    res <- unzip(zipfile = file.path(download_dir, "dwl", sprintf("E-MTAB-783.raw.%i.zip", i)), exdir = file.path(download_dir, 'array'))
+    res <- unzip(zipfile = file.path(download_dir, "dwl", sprintf("E-MTAB-783.raw.%i.zip", i)), exdir = file.path(download_dir, "array"))
     ## compress each CEL file individually using gzip
     library(R.utils)
-    sapply(file.path(download_dir, 'array', as.character(fff[, "Name"])), R.utils::gzip, overwrite = TRUE)
+    sapply(file.path(download_dir, "array", as.character(fff[, "Name"])), R.utils::gzip, overwrite = TRUE)
     i <- i + 1
   }
 }
@@ -43,7 +43,7 @@ celfile.timestamp <- t(sapply(strsplit(celfile.timestamp, split = " "), function
 dimnames(celfile.timestamp) <- list(celfn, c("file.day", "file.hour"))
 
 # unlink(file.path(my.path, "dwl"), recursive=TRUE)
-write.csv(celfile.timestamp, file = file.path(download_dir, "celfile_timestamp.csv"))
+write.csv(celfile.timestamp, file = file.path(download_dir, "celfile_timestamp_u133a.csv"))
 
 
 ## download sample information
@@ -56,7 +56,7 @@ if (dwl.status != 0) {
 }
 file.copy(from = file.path(download_dir, "dwl", "E-MTAB-783.sdrf.txt"), to = myfn)
 
-zip(zipfile = file.path(download_dir, 'gdsc_array'), files = list.files(path=file.path(download_dir, 'array'), full.names = TRUE),  extras = '-j')
+zip(zipfile = file.path(download_dir, "gdsc_array_u133a"), files = list.files(path = file.path(download_dir, "array"), full.names = TRUE), extras = "-j")
 
 unlink(file.path(download_dir, "dwl"), recursive = T)
 unlink(file.path(download_dir, "array"), recursive = T)
