@@ -8,6 +8,19 @@ processed_dir <- paste0(args[1], "processed")
 # download_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/download"
 # processed_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/processed"
 
+matchToIDTable <- function(ids, tbl, column, returnColumn = "unique.cellid") {
+  sapply(ids, function(x) {
+    myx <- grep(paste0("((///)|^)", Hmisc::escapeRegex(x), "((///)|$)"), tbl[, column])
+    if (length(myx) > 1) {
+      stop("Something went wrong in curating ids, we have multiple matches")
+    }
+    if (length(myx) == 0) {
+      return(NA_character_)
+    }
+    return(tbl[myx, returnColumn])
+  })
+}
+
 myfn <- file.path(download_dir, "screened_compounds_rel_8.0.csv")
 myfn2 <- file.path(download_dir, "screened_compunds_rel_8.2.csv")
 

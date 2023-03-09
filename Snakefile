@@ -10,8 +10,8 @@ from snakemake.remote.S3 import RemoteProvider as S3RemoteProvider
 prefix = config["prefix"]
 rna_tool = 'Kallisto-0.46.1'
 rna_ref = 'Gencode_v33'
-version = "v1"
-sens_version = "8.0"
+data_version = 'v1'
+sens_version = '8.0'
 microarray_ver = "u133a"
 
 basePath = "https://orcestradata.blob.core.windows.net/gdsc/GDSC/2019"
@@ -20,7 +20,7 @@ rnaseq_dir = path.join(prefix, "processed",
                        rna_tool_dir, rna_tool_dir + '_' + rna_ref)
 rna_ref_file = rna_ref.replace('_', '.') + '.annotation.RData'
 
-data_ver = "gdscv1" if version == "v1" else "gdscv2"
+data_ver = "gdscv1" if data_version == "v1" else "gdscv2"
 
 rule get_pset:
     input:
@@ -68,15 +68,15 @@ rule process_raw_sens_data:
         prefix + "processed/cellInfo_8.0.RData",
         prefix + "processed/cellInfo_8.2.RData"
     output:
-        prefix + "processed/gdscv1_sens_info_8.0.rds",
-        prefix + "processed/gdscv1_sens_raw_8.0.rds",
-        prefix + "processed/gdscv2_sens_info_8.2.rds",
-        prefix + "processed/gdscv2_sens_raw_8.2.rds",
+        prefix + "processed/" + data_ver + "_sens_info_8.0.rds",
+        prefix + "processed/" + data_ver + "_sens_raw_8.0.rds",
+        prefix + "processed/" + data_ver + "_sens_info_8.2.rds",
+        prefix + "processed/" + data_ver + "_sens_raw_8.2.rds",
         prefix + "processed/raw_sense_slices_8.0.zip",
         prefix + "processed/raw_sense_slices_8.2.zip"
     shell:
         """
-        Rscript {prefix}scripts/processRawSensData.R {prefix} {version}
+        Rscript {prefix}scripts/processRawSensData.R {prefix} {data_version}
         """
 
 rule process_gdsc_drugs:
@@ -125,6 +125,8 @@ rule download_gdsc_cells:
 
 rule normalize_microarray:
     input:
+        prefix + "download/celline.gdsc.RData",
+        prefix + "download/Ensemblv99annotation.RData",
         prefix + "brain_array/hgu219hsensgcdf_20.0.0.tar.gz",
         prefix + "brain_array/hgu219hsensgprobe_20.0.0.tar.gz",
         prefix + "brain_array/pd.hgu219.hs.ensg_20.0.0.tar.gz",
@@ -231,7 +233,7 @@ rule download_data:
         wget '{basePath}/RNA-seq/{rna_tool_dir}.tar.gz' -O {prefix}download/{rna_tool_dir}.tar.gz
         wget '{basePath}/GDSC_molecular.zip' -O {prefix}download/GDSC_molecular.zip
         wget '{basePath}/celline.gdsc.RData' -O {prefix}download/celline.gdsc.RData
-        wget '{basePath}/mutations_latest.csv' -O {prefix}download/mutations_latest.csv
+        wget '{basePath}/Mutation/mutations_latest.csv' -O {prefix}download/mutations_latest.csv
         wget 'https://ndownloader.figshare.com/files/24613355' -O {prefix}download/CCLE_mutations.csv
         wget 'https://ndownloader.figshare.com/files/24613394' -O {prefix}download/sample_info.csv
         wget 'ftp://ftp.sanger.ac.uk/pub4/cancerrxgene/releases/release-5.0/gdsc_mutation_w5.csv' -O {prefix}download/gdsc_mutation_w5.csv

@@ -4,20 +4,22 @@ library(PharmacoGx)
 options(stringsAsFactors = FALSE)
 
 args <- commandArgs(trailingOnly = TRUE)
-download_dir <- paste0(args[1], "microarray")
-processsed_dir <- paste0(args[1], "processed")
+download_dir <- paste0(args[1], "download")
+brainarray_dir <- paste0(args[1], "brain_array")
+microarray_dir <- paste0(args[1], "microarray")
+processed_dir <- paste0(args[1], "processed")
 
 # download_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/download"
 # processed_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/processed"
 
-load(file.path(processed_dir, "celline.gdsc.RData"))
+load(file.path(download_dir, "celline.gdsc.RData"))
 celline <- celline.gdsc
 
-celfile.timestamp <- read.csv(file.path(download_dir, "celfile_timestamp_u133a.csv"), row.names = 1)
+celfile.timestamp <- read.csv(file.path(microarray_dir, "celfile_timestamp_u133a.csv"), row.names = 1)
 
-file.paths <- file.path(download_dir, c(
-  list.files(pattern = "^hthgu133ahsensg*", path = download_dir),
-  list.files(pattern = "^pd.hthgu133a.hs.ensg*", path = download_dir)
+file.paths <- file.path(brainarray_dir, c(
+  list.files(pattern = "^hthgu133ahsensg*", path = brainarray_dir),
+  list.files(pattern = "^pd.hthgu133a.hs.ensg*", path = brainarray_dir)
 ))
 
 print(file.paths)
@@ -46,10 +48,10 @@ install.packages(file.paths, repos = NULL, type = "source")
     return(ddate)
   }
 
-dir.create(file.path(download_dir, 'gdsc_array'))
-unzip(file.path(download_dir, 'gdsc_array_u133a.zip'), exdir = file.path(download_dir, 'gdsc_array'))
-celfn <- list.celfiles(file.path(download_dir, 'gdsc_array'), full.names = TRUE)
-celfns <- list.celfiles(file.path(download_dir, 'gdsc_array'), full.names = FALSE)
+dir.create(file.path(microarray_dir, "gdsc_array"))
+unzip(file.path(microarray_dir, "gdsc_array_u133a.zip"), exdir = file.path(microarray_dir, "gdsc_array"))
+celfn <- list.celfiles(file.path(microarray_dir, "gdsc_array"), full.names = TRUE)
+celfns <- list.celfiles(file.path(microarray_dir, "gdsc_array"), full.names = FALSE)
 ## experiments' names
 names(celfn) <- names(celfns) <- gsub(".CEL.gz", "", celfns)
 ## chip type and date
@@ -57,7 +59,7 @@ chipt <- sapply(celfn, celfileChip)
 chipd <- t(sapply(celfn, celfileDateHour))
 
 message("Read sample information")
-sampleinfo <- read.csv(file.path(download_dir, "gdsc_ge_sampleinfo_u133a.txt"), sep = "\t")
+sampleinfo <- read.csv(file.path(microarray_dir, "gdsc_ge_sampleinfo_u133a.txt"), sep = "\t")
 sampleinfo[sampleinfo == "" | sampleinfo == " "] <- NA
 ## curate cell line names
 sampleinfo[sampleinfo[, "Source.Name"] == "MZ2-MEL.", "Source.Name"] <- "MZ2-MEL"
@@ -76,15 +78,15 @@ if (any(!is.element(fn[!is.na(fn)], names(celfns)))) {
 rownames(sampleinfo) <- fn
 sampleinfo <- sampleinfo[names(celfn), , drop = FALSE]
 sampleinfo <- data.frame(
-  "samplename" = names(celfns), 
-  "filename" = celfns, 
-  "chiptype" = chipt, 
-  "hybridization.date" = chipd[, "day"], 
-  "hybridization.hour" = chipd[, "hour"], 
-  "file.day" = celfile.timestamp[, "file.day"], 
-  "file.hour" = celfile.timestamp[, "file.hour"], 
-  "batchid" = NA, 
-  "cellid" = sampleinfo[, "Source.Name"], 
+  "samplename" = names(celfns),
+  "filename" = celfns,
+  "chiptype" = chipt,
+  "hybridization.date" = chipd[, "day"],
+  "hybridization.hour" = chipd[, "hour"],
+  "file.day" = celfile.timestamp[, "file.day"],
+  "file.hour" = celfile.timestamp[, "file.hour"],
+  "batchid" = NA,
+  "cellid" = sampleinfo[, "Source.Name"],
   sampleinfo
 )
 
@@ -100,23 +102,23 @@ save(cgp.u133a, compress = TRUE, file = file.path(processed_dir, "GDSC_u133a_ENS
 print(head(rownames(pData(cgp.u133a))))
 colnames(cgp.u133a) <- gsub(colnames(cgp.u133a), pat = ".gz", rep = "", fixed = TRUE)
 pData(cgp.u133a) <- data.frame(
-  pData(cgp.u133a), 
-  sampleinfo[match(colnames(exprs(cgp.u133a)), sampleinfo[, "Array.Data.File"]),, drop = FALSE], 
+  pData(cgp.u133a),
+  sampleinfo[match(colnames(exprs(cgp.u133a)), sampleinfo[, "Array.Data.File"]), , drop = FALSE],
   celfile.timestamp[rownames(pData(cgp.u133a)), , drop = FALSE]
 )
 colnames(exprs(cgp.u133a)) <- rownames(pData(cgp.u133a)) <- colnames(exprs(cgp.u133a))
 fData(cgp.u133a) <- data.frame(
-  "PROBE" = rownames(exprs(cgp.u133a)), 
+  "PROBE" = rownames(exprs(cgp.u133a)),
   "GENEID" = sapply(strsplit(rownames(exprs(cgp.u133a)), "_"), function(x) {
-      return(x[[1]])
-  }), 
-"BEST" = TRUE
+    return(x[[1]])
+  }),
+  "BEST" = TRUE
 )
 rownames(fData(cgp.u133a)) <- rownames(exprs(cgp.u133a))
 cgp.u133a.ensg <- cgp.u133a
 
 
-load(file.path(download_dir, "Ensembl.v99.annotation.RData"))
+load(file.path(download_dir, "Ensemblv99annotation.RData"))
 eset <- cgp.u133a.ensg
 controls <- rownames(exprs(eset))[grep("AFFX", rownames(exprs(eset)))]
 ensemblIds <- sapply(strsplit(rownames(exprs(eset)), "_at"), function(x) {
@@ -139,4 +141,4 @@ annotation(eset) <- "rna"
 cgp.u133a.ensg <- eset
 save(cgp.u133a.ensg, compress = TRUE, file = file.path(processed_dir, "GDSC_u133a_ENSG.RData"))
 
-unlink(file.path(download_dir, 'gdsc_array'), recursive = T)
+unlink(file.path(download_dir, "gdsc_array"), recursive = T)

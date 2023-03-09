@@ -4,7 +4,7 @@ options(stringsAsFactors = FALSE)
 
 args <- commandArgs(trailingOnly = TRUE)
 download_dir <- paste0(args[1], "download")
-processsed_dir <- paste0(args[1], "processed")
+processed_dir <- paste0(args[1], "processed")
 
 myfn <- file.path(download_dir, "gdsc_cellinfo.xlsx")
 myfn2 <- file.path(download_dir, "gdsc_cellinfo_8.2.xlsx")

@@ -171,4 +171,6 @@ dmypy.json
 .snakemake
 download
 processed
+brain_array
+microarray
 .DS_Store

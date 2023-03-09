@@ -1,7 +1,7 @@
 library(downloader)
 
 args <- commandArgs(trailingOnly = TRUE)
-download_dir <- paste0(args[1], "download")
+download_dir <- paste0(args[1], "brain_array")
 
 # download_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/download"
 
