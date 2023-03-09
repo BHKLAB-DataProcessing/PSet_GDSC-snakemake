@@ -9,34 +9,41 @@ library(reshape2)
 library(CoreGx)
 library(SummarizedExperiment)
 library(biocompute)
+library(parallel)
 
 options(stringsAsFactors = FALSE)
 print("Retrieving selection")
 
 args <- commandArgs(trailingOnly = TRUE)
 
-root_dir <- args[1]
+root_dir <- args[[1]]
 # root_dir <- '/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC'
 
 download_dir <- file.path(root_dir, "download")
 processed_dir <- file.path(root_dir, "processed")
+tools <- args[[2]]
+transcriptome <- args[[3]]
+version <- args[[4]]
+drug_version <- args[[5]]
+standardize <- args[[6]]
+microarray_v_select <- args[[7]]
 
-tools <- "Kallisto-0.46.1"
-transcriptome <- "Gencode_v33"
-version <- "v1"
-drug_version <- "8.0"
-standardize <- TRUE
-microarray_v_select <- "u133a"
+cnv_select <- grep("cnv", args)
+mutation_select <- grep("mutation", args)
+microarray_select <- grep("microarray", args)
+fusion_select <- grep("fusion", args)
 
-# rnaseq_select <- args
-# print(rnaseq_select)
-# ORCESTRA_ID = tail(rnaseq_select, n=1)
-
-cnv_select <- grep("cnv", rnaseq_select)
-mutation_select <- grep("mutation", rnaseq_select)
-microarray_select <- grep("microarray", rnaseq_select)
-fusion_select <- grep("fusion", rnaseq_select)
-# microarray_v_select <- tail(args, n = 3)[2]
+# tools <- "Kallisto-0.46.1"
+# transcriptome <- "Gencode_v33"
+# version <- "v1"
+# drug_version <- "8.0"
+# standardize <- TRUE
+# microarray_v_select <- "u133a"
+# 
+# cnv_select <- "cnv"
+# mutation_select <- "mutation"
+# microarray_select <- "microarray"
+# fusion_select <- "fusion"
 
 rnaseq_results <- list()
 
@@ -245,11 +252,18 @@ switch(version,
 switch(drug_version,
   "8.0" = {
     Name <- "_8.0"
+    year <- '2019'
   },
   "8.2" = {
     Name <- "_8.2"
+    year <- '2020'
   }
 )
+
+# unzip molecular data
+unzip(zipfile = file.path(download_dir, 'GDSC_molecular.zip'), exdir = processed_dir)
+unlink(file.path(processed_dir, '__MACOSX'), recursive = TRUE)
+untar(tarfile = file.path(download_dir, paste0(tools, '.tar.gz')), exdir = processed_dir)
 
 cell_all <- read.csv(file.path(download_dir, "cell_annotation_all.csv"), na.strings = c("", " ", "NA"))
 
@@ -302,9 +316,8 @@ cell.all <- read.csv(file.path(download_dir, "cell_annotation_all.csv"))
 
 message("Loading CNV Data")
 
-
 # load(file.path(myDirPrefix, "gdscCNA/GDSC_eset.RData"))
-cl.eset <- readRDS(file.path(processed_dir, "GDSC_CN.gene.RDS"))
+cl.eset <- readRDS(file.path(processed_dir, "GDSC_molecular/2019/CNV/GDSC_CN.gene.RDS"))
 y <- ExpressionSet(cl.eset@assayData$exprs) # remove other assays for now (nAraw, nBraw, nMajor, nMinor, TCN), as SummarizeMolecularProfiles does not support multi-assays
 pData(y) <- cl.eset@phenoData@data
 cl.eset <- y
@@ -352,7 +365,7 @@ MutationEset <- ExpressionSet(t(mutation))
 
 colnames(MutationEset) <- mut.cellid
 
-load(file.path(download_dir, "Ensembl.v99.annotation.RData"))
+load(file.path(download_dir, "Ensemblv99annotation.RData"))
 geneMap <- features_gene
 
 geneInfoM <- geneMap[na.omit(match(rownames(MutationEset), geneMap[, "gene_name"])), c("gene_id", "gene_name", "gene_biotype")]
@@ -904,11 +917,16 @@ if (length(standardize) > 0) {
 
 GDSC@annotation$version <- 2
 
+year <- 
+
 saveRDS(
   GDSC,
-  file = file.path(root_dir, paste0("GDSC", gsub("v", "", version), ".rds")),
+  file = file.path(root_dir, paste0("GDSC_", year, "(",version, '-', drug_version, ")", ".rds")),
   version = 2
 )
+
+unlink(file.path(processed_dir, 'GDSC_molecular'), recursive = TRUE)
+unlink(file.path(processed_dir, 'Kallisto_0.46.1'), recursive = TRUE)
 
 # dataset <- paste0("GDSC", gsub("v", "",version))
 

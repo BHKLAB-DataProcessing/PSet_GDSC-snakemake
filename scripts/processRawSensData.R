@@ -273,4 +273,6 @@ for (i in seq_along(sens.raw.x)) {
 }
 
 zip(zipfile = file.path(processed_dir, "raw_sense_slices_8.2.zip"), files = list.files(file.path(processed_dir, "slices8_2"), full.names = TRUE), extras = "-j")
-# unlink(file.path(processed_dir, "slices8_2"), recursive = TRUE)
+
+unlink(file.path(processed_dir, "slices8_0"), recursive = TRUE)
+unlink(file.path(processed_dir, "slices8_2"), recursive = TRUE)
