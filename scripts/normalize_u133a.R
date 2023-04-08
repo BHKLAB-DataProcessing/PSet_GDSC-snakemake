@@ -4,10 +4,10 @@ library(PharmacoGx)
 options(stringsAsFactors = FALSE)
 
 args <- commandArgs(trailingOnly = TRUE)
-download_dir <- paste0(args[1], "download")
-brainarray_dir <- paste0(args[1], "brain_array")
-microarray_dir <- paste0(args[1], "microarray")
-processed_dir <- paste0(args[1], "processed")
+download_dir <- paste0(args[[1]], "download")
+brainarray_dir <- paste0(args[[1]], "brain_array")
+microarray_dir <- paste0(args[[1]], "microarray")
+processed_dir <- paste0(args[[1]], "processed")
 
 # download_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/download"
 # processed_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/processed"

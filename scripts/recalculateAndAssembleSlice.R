@@ -2,15 +2,16 @@ library(PharmacoGx)
 library(stringr)
 
 args <- commandArgs(trailingOnly = TRUE)
-processed_dir <- paste0(args[1], "processed")
-sens_version <- args[2]
+processed_dir <- paste0(args[[1]], "processed")
+sens_version <- args[[2]]
+data_ver <- args[[3]]
 
 # processed_dir <- "/Users/minoru/Code/bhklab/DataProcessing/PSet/getGDSC/processed"
 # sens_version <- "8.2"
 
 slices_dir <- file.path(processed_dir, paste0("slices", str_replace(sens_version, "\\.", "_")))
 dir.create(slices_dir)
-unzip(file.path(processed_dir, paste0("raw_sense_slices_", sens_version, ".zip")), exdir = slices_dir, junkpaths = TRUE)
+unzip(file.path(processed_dir, paste0(data_ver, "_raw_sense_slices_", sens_version, ".zip")), exdir = slices_dir, junkpaths = TRUE)
 
 files <- list.files(slices_dir, full.names = TRUE)
 recomp_dir <- file.path(processed_dir, paste0("slices_recomp", str_replace(sens_version, "\\.", "_")))
@@ -48,7 +49,7 @@ for (fn in myfn) {
 
 res <- do.call(rbind, slices)
 
-save(res, file = file.path(processed_dir, paste0("profiles_", sens_version, ".RData")))
+save(res, file = file.path(processed_dir, paste0(data_ver, "_profiles_", sens_version, ".RData")))
 
 unlink(slices_dir, recursive = TRUE)
 unlink(recomp_dir, recursive = TRUE)

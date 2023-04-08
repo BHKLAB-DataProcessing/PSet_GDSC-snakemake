@@ -8,12 +8,16 @@ S3 = S3RemoteProvider(
 )
 
 prefix = config["prefix"]
-rna_tool = 'Kallisto-0.46.1'
-rna_ref = 'Gencode_v33'
-data_version = 'v1'
-sens_version = '8.0'
-standardize = True
-microarray_ver = "u133a"
+filename = config["filename"]
+rna_tool = config["rna_tool"]
+rna_ref = config["rna_ref"]
+is_filtered = config["filtered"]
+filtered = 'filtered' if is_filtered is not None and is_filtered == 'filtered' else ''
+
+data_version = config["data_version"]
+sens_version = str(config["sens_version"])
+microarray_ver = config["microarray_ver"]
+moldata = config["moldata"]
 
 basePath = "https://orcestradata.blob.core.windows.net/gdsc/GDSC/2019"
 rna_tool_dir = rna_tool.replace('-', '_')
@@ -28,40 +32,54 @@ rule get_pset:
     input:
         S3.remote(prefix + "download/drugs_with_ids.csv"),
         S3.remote(prefix + "download/cell_annotation_all.csv"),
-        S3.remote(prefix + "download/" + rna_tool_dir + ".tar.gz"),
         S3.remote(prefix + "download/GDSC_molecular.zip"),
-        S3.remote(prefix + "download/" + rna_ref_file),
+        S3.remote(prefix + "processed/" + rna_tool_dir +
+                  "_" + rna_ref + "_rnaseq_results.rds"),
         S3.remote(prefix + "download/Ensemblv99annotation.RData"),
         S3.remote(prefix + "processed/GDSC_" + microarray_ver + "_ENSG.RData"),
         S3.remote(prefix + "download/gdsc_mutation_w5.csv"),
-        S3.remote(prefix + "download/GDSC_rnaseq_meta.txt"),
         S3.remote(prefix + "download/mutations_latest.csv"),
         S3.remote(prefix + "processed/" + data_ver +
                   "_sens_info_" + sens_version + ".rds"),
         S3.remote(prefix + "processed/" + data_ver +
                   "_sens_raw_" + sens_version + ".rds"),
-        S3.remote(prefix + "processed/profiles_" + sens_version + ".RData"),
+        S3.remote(prefix + "processed/" + data_ver +
+                  "_profiles_" + sens_version + ".RData"),
         S3.remote(prefix + "processed/drugInfo_" + sens_version + ".RData"),
         S3.remote(prefix + "processed/cellInfo_" + sens_version + ".RData")
     output:
-        prefix + "GDSC_" + year + \
-            "(" + data_version + "-" + sens_version + ").rds"
+        prefix + filename
     shell:
         """
         Rscript scripts/getGDSC.R \
-            {prefix} {rna_tool} {rna_ref} {data_version} {sens_version} {standardize} {microarray_ver} \
-            cnv mutation microarray fusion
+            {prefix} {filename} {data_version} {sens_version} {microarray_ver} {rna_tool_dir} {rna_ref} {filtered} \
+            {moldata}
+        """
+
+rule process_rna_seq:
+    input:
+        S3.remote(prefix + "download/cell_annotation_all.csv"),
+        S3.remote(prefix + "download/GDSC_rnaseq_meta.txt"),
+        S3.remote(prefix + "download/" + rna_tool_dir + '.tar.gz'),
+        S3.remote(prefix + 'download/' + rna_ref_file),
+    output:
+        S3.remote(prefix + "processed/" + rna_tool_dir +
+                  "_" + rna_ref + "_rnaseq_results.rds")
+    shell:
+        """
+        Rscript scripts/processRNAseq.R {prefix} {rna_tool} {rna_ref}
         """
 
 rule recalculate_and_assemble:
     input:
-        S3.remote(prefix + "processed/raw_sense_slices_" +
+        S3.remote(prefix + "processed/" + data_ver + "_raw_sense_slices_" +
                   sens_version + ".zip"),
     output:
-        S3.remote(prefix + "processed/profiles_" + sens_version + ".RData"),
+        S3.remote(prefix + "processed/" + data_ver +
+                  "_profiles_" + sens_version + ".RData"),
     shell:
         """
-        Rscript scripts/recalculateAndAssembleSlice.R {prefix} {sens_version}
+        Rscript scripts/recalculateAndAssembleSlice.R {prefix} {sens_version} {data_ver}
         """
 
 rule process_raw_sens_data:
@@ -79,8 +97,10 @@ rule process_raw_sens_data:
         S3.remote(prefix + "processed/" + data_ver + "_sens_raw_8.0.rds"),
         S3.remote(prefix + "processed/" + data_ver + "_sens_info_8.2.rds"),
         S3.remote(prefix + "processed/" + data_ver + "_sens_raw_8.2.rds"),
-        S3.remote(prefix + "processed/raw_sense_slices_8.0.zip"),
-        S3.remote(prefix + "processed/raw_sense_slices_8.2.zip")
+        S3.remote(prefix + "processed/" + data_ver +
+                  "_raw_sense_slices_8.0.zip"),
+        S3.remote(prefix + "processed/" + data_ver +
+                  "_raw_sense_slices_8.2.zip")
     shell:
         """
         Rscript scripts/processRawSensData.R {prefix} {data_version}
@@ -215,7 +235,6 @@ rule download_annotation:
     output:
         S3.remote(prefix + "download/drugs_with_ids.csv"),
         S3.remote(prefix + "download/cell_annotation_all.csv"),
-        S3.remote(prefix + "download/" + rna_ref_file),
         S3.remote(prefix + "download/GDSC_rnaseq_meta.txt"),
         S3.remote(prefix + "download/Ensemblv99annotation.RData")
     shell:
@@ -224,17 +243,25 @@ rule download_annotation:
             -O {prefix}download/drugs_with_ids.csv
         wget 'https://github.com/BHKLAB-DataProcessing/Annotations/raw/master/cell_annotation_all.csv' \
             -O {prefix}download/cell_annotation_all.csv
-        wget 'https://github.com/BHKLAB-DataProcessing/Annotations/raw/master/{rna_ref_file}' \
-            -O {prefix}download/{rna_ref_file}
         wget 'https://github.com/BHKLAB-DataProcessing/Annotations/raw/master/GDSC_rnaseq_meta.txt' \
             -O {prefix}download/GDSC_rnaseq_meta.txt
         wget 'https://github.com/BHKLAB-DataProcessing/Annotations/raw/master/Ensembl.v99.annotation.RData' \
             -O {prefix}download/Ensemblv99annotation.RData
         """
 
+rule download_rnaseq_data:
+    output:
+        S3.remote(prefix + "download/" + rna_ref_file),
+        S3.remote(prefix + "download/" + rna_tool_dir + ".tar.gz")
+    shell:
+        """
+        wget 'https://github.com/BHKLAB-DataProcessing/Annotations/raw/master/{rna_ref_file}' \
+            -O {prefix}download/{rna_ref_file}
+        wget '{basePath}/RNA-seq/{rna_tool_dir}.tar.gz' -O {prefix}download/{rna_tool_dir}.tar.gz
+        """
+
 rule download_data:
     output:
-        S3.remote(prefix + "download/" + rna_tool_dir + ".tar.gz"),
         S3.remote(prefix + "download/CCLE_mutations.csv"),
         S3.remote(prefix + "download/sample_info.csv"),
         S3.remote(prefix + "download/GDSC_molecular.zip"),
@@ -243,7 +270,6 @@ rule download_data:
         S3.remote(prefix + "download/mutations_latest.csv")
     shell:
         """
-        wget '{basePath}/RNA-seq/{rna_tool_dir}.tar.gz' -O {prefix}download/{rna_tool_dir}.tar.gz
         wget '{basePath}/GDSC_molecular.zip' -O {prefix}download/GDSC_molecular.zip
         wget '{basePath}/celline.gdsc.RData' -O {prefix}download/celline.gdsc.RData
         wget '{basePath}/Mutation/mutations_latest.csv' -O {prefix}download/mutations_latest.csv

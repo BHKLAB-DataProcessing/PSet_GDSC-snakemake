@@ -147,7 +147,7 @@ for (i in seq_along(sens.raw.x)) {
   saveRDS(slce, file = file.path(processed_dir, "slices8_0", paste0("gdsc_raw_sens_", i, ".rds")))
 }
 
-zip(zipfile = file.path(processed_dir, "raw_sense_slices_8.0.zip"), files = list.files(file.path(processed_dir, "slices8_0"), full.names = TRUE), extras = "-j")
+zip(zipfile = paste0(myOutPrefix, "_raw_sense_slices_8.0.zip"), files = list.files(file.path(processed_dir, "slices8_0"), full.names = TRUE), extras = "-j")
 # unlink(file.path(processed_dir, "slices8_0"), recursive = TRUE)
 
 
@@ -272,7 +272,7 @@ for (i in seq_along(sens.raw.x)) {
   saveRDS(slce, file = file.path(processed_dir, "slices8_2", paste0("gdsc_raw_sens_8.2_", i, ".rds")))
 }
 
-zip(zipfile = file.path(processed_dir, "raw_sense_slices_8.2.zip"), files = list.files(file.path(processed_dir, "slices8_2"), full.names = TRUE), extras = "-j")
+zip(zipfile = paste0(myOutPrefix, "_raw_sense_slices_8.2.zip"), files = list.files(file.path(processed_dir, "slices8_2"), full.names = TRUE), extras = "-j")
 
 unlink(file.path(processed_dir, "slices8_0"), recursive = TRUE)
 unlink(file.path(processed_dir, "slices8_2"), recursive = TRUE)

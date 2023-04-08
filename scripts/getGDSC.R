@@ -21,17 +21,22 @@ root_dir <- args[[1]]
 
 download_dir <- file.path(root_dir, "download")
 processed_dir <- file.path(root_dir, "processed")
-tools <- args[[2]]
-transcriptome <- args[[3]]
-version <- args[[4]]
-drug_version <- args[[5]]
-standardize <- args[[6]]
-microarray_v_select <- args[[7]]
+filename <- args[[2]]
+version <- args[[3]]
+drug_version <- args[[4]]
+microarray_v_select <- args[[5]]
+rna_tool_dir <- args[[6]]
+rna_ref <- args[[7]]
 
 cnv_select <- grep("cnv", args)
 mutation_select <- grep("mutation", args)
 microarray_select <- grep("microarray", args)
 fusion_select <- grep("fusion", args)
+filtered <- args[grep("filtered", args)]
+standardize <- FALSE
+if (filtered == "filtered") {
+  standardize <- TRUE
+}
 
 # tools <- "Kallisto-0.46.1"
 # transcriptome <- "Gencode_v33"
@@ -39,21 +44,24 @@ fusion_select <- grep("fusion", args)
 # drug_version <- "8.0"
 # standardize <- TRUE
 # microarray_v_select <- "u133a"
-# 
+#
 # cnv_select <- "cnv"
 # mutation_select <- "mutation"
 # microarray_select <- "microarray"
 # fusion_select <- "fusion"
 
-rnaseq_results <- list()
+rnaseq_results <- readRDS(file.path(
+  processed_dir,
+  paste0(rna_tool_dir, "_", rna_ref, "_rnaseq_results.rds")
+))
 
 # tools <- grep(pattern = 'Kallisto|Salmon', x = rnaseq_select)
 # tools <- rnaseq_select[tools]
-tools <- gsub("-", "_", tools)
+# tools <- gsub("-", "_", tools)
 # transcriptome <- grep(pattern = 'Gencode|Ensembl', x = rnaseq_select)
 # transcriptome <- rnaseq_select[transcriptome]
-tool_path <- expand.grid(a = tools, b = transcriptome)
-tool_path <- paste0(tool_path$a, "_", tool_path$b)
+# tool_path <- expand.grid(a = tools, b = transcriptome)
+# tool_path <- paste0(tool_path$a, "_", tool_path$b)
 
 # print(tool_path)
 #
@@ -61,8 +69,6 @@ tool_path <- paste0(tool_path$a, "_", tool_path$b)
 # drug_version <- head(args)[4]
 print(version)
 print(drug_version)
-
-# standardize <- args[grep("filtered", args)]
 
 # standardize drug concentration range function
 standardizeRawDataConcRange <- function(sens.info, sens.raw) {
@@ -252,18 +258,18 @@ switch(version,
 switch(drug_version,
   "8.0" = {
     Name <- "_8.0"
-    year <- '2019'
+    year <- "2019"
   },
   "8.2" = {
     Name <- "_8.2"
-    year <- '2020'
+    year <- "2020"
   }
 )
 
 # unzip molecular data
-unzip(zipfile = file.path(download_dir, 'GDSC_molecular.zip'), exdir = processed_dir)
-unlink(file.path(processed_dir, '__MACOSX'), recursive = TRUE)
-untar(tarfile = file.path(download_dir, paste0(tools, '.tar.gz')), exdir = processed_dir)
+unzip(zipfile = file.path(download_dir, "GDSC_molecular.zip"), exdir = processed_dir)
+unlink(file.path(processed_dir, "__MACOSX"), recursive = TRUE)
+# untar(tarfile = file.path(download_dir, paste0(tools, ".tar.gz")), exdir = processed_dir)
 
 cell_all <- read.csv(file.path(download_dir, "cell_annotation_all.csv"), na.strings = c("", " ", "NA"))
 
@@ -285,7 +291,7 @@ rownames(sens.raw) <- sens.info$exp_id
 
 # sens.profiles <- cbind(data.frame("AAC" = sens.recalc$AUC, "IC50" = sens.recalc$IC50), sens.pars)
 
-load(file.path(processed_dir, paste0("profiles", Name, ".RData")))
+load(file.path(processed_dir, paste0(myInPrefix, "_profiles", Name, ".RData")))
 
 sens.profiles <- res
 
@@ -415,141 +421,6 @@ load(file.path(processed_dir, paste0("drugInfo", Name, ".RData")))
 
 
 rownames(cell.info) <- cell.info$unique.cellid
-
-summarizeRnaSeq <- function(dir,
-                            features_annotation,
-                            samples_annotation,
-                            method) {
-  library(Biobase)
-  library(readr)
-  library(tximport)
-
-  load(features_annotation)
-
-  tx2gene <- as.data.frame(cbind("transcript" = tx2gene$transcripts, "gene" = tx2gene$genes))
-
-  files <- list.files(dir, recursive = TRUE, full.names = T)
-  if (method == "kallisto") {
-    resFiles <- grep("abundance.h5", files)
-  } else {
-    resFiles <- grep("quant.sf", files)
-  }
-  resFiles <- files[resFiles]
-  length(resFiles)
-  names(resFiles) <- basename(dirname(resFiles))
-
-  if (features_annotation == file.path(download_dir, "Ensembl.v99.annotation.RData")) {
-    txi <- tximport(resFiles, type = method, tx2gene = tx2gene, ignoreAfterBar = TRUE, ignoreTxVersion = TRUE)
-  } else {
-    txi <- tximport(resFiles, type = method, tx2gene = tx2gene, ignoreAfterBar = TRUE, ignoreTxVersion = FALSE)
-  }
-
-  head(txi$counts[, 1:5])
-  dim(txi$counts)
-
-  xx <- txi$abundance
-  gene.exp <- Biobase::ExpressionSet(log2(xx + 0.001))
-  fData(gene.exp) <- features_gene[featureNames(gene.exp), ]
-  pData(gene.exp) <- samples_annotation[sampleNames(gene.exp), ]
-  annotation(gene.exp) <- "rnaseq"
-
-  xx <- txi$counts
-  gene.count <- Biobase::ExpressionSet(log2(xx + 1))
-  fData(gene.count) <- features_gene[featureNames(gene.count), ]
-  pData(gene.count) <- samples_annotation[sampleNames(gene.count), ]
-  annotation(gene.count) <- "rnaseq"
-
-  txii <- tximport(resFiles, type = method, txOut = T)
-
-  if (features_annotation == file.path(download_dir, "Ensembl.v99.annotation.RData")) {
-    # remove non-coding transcripts in ensembl
-    rownames(txii$abundance) <- gsub("\\..*", "", rownames(txii$abundance))
-    txii$abundance[which(!rownames(txii$abundance) %in% features_transcript$transcript_id)]
-    missing_transcript <- rownames(txii$abundance)[which(!rownames(txii$abundance) %in% features_transcript$transcript_id)]
-    txii$abundance <- txii$abundance[-which(rownames(txii$abundance) %in% missing_transcript), ]
-  }
-
-  xx <- txii$abundance
-  transcript.exp <- Biobase::ExpressionSet(log2(xx[, 1:length(resFiles)] + 0.001))
-  if (features_annotation == file.path(download_dir, "Gencode.v33.annotation.RData") || features_annotation == file.path(download_dir, "Gencode.v33lift37.annotation.RData")) {
-    featureNames(transcript.exp) <- gsub("\\|.*", "", featureNames(transcript.exp))
-    fData(transcript.exp) <- features_transcript[featureNames(transcript.exp), ]
-  } else {
-    fData(transcript.exp) <- features_transcript[featureNames(transcript.exp), ]
-  }
-  pData(transcript.exp) <- samples_annotation[sampleNames(transcript.exp), ]
-  annotation(transcript.exp) <- "isoform"
-
-
-  if (features_annotation == file.path(download_dir, "Ensembl.v99.annotation.RData")) {
-    # remove non-coding transcripts in ensembl
-    rownames(txii$counts) <- gsub("\\..*", "", rownames(txii$counts))
-    txii$counts <- txii$counts[-which(rownames(txii$counts) %in% missing_transcript), ]
-  }
-  xx <- txii$counts
-  transcript.count <- Biobase::ExpressionSet(log2(xx[, 1:length(resFiles)] + 1))
-  if (features_annotation == file.path(download_dir, "Gencode.v33.annotation.RData") || features_annotation == file.path(download_dir, "Gencode.v33lift37.annotation.RData")) {
-    featureNames(transcript.count) <- gsub("\\|.*", "", featureNames(transcript.count))
-    fData(transcript.count) <- features_transcript[featureNames(transcript.count), ]
-  } else {
-    fData(transcript.count) <- features_transcript[featureNames(transcript.count), ]
-  }
-  pData(transcript.count) <- samples_annotation[sampleNames(transcript.count), ]
-  annotation(transcript.count) <- "isoform"
-
-
-  pData(gene.exp)[, "batchid"] <- NA
-  pData(gene.count)[, "batchid"] <- NA
-  pData(transcript.exp)[, "batchid"] <- NA
-  pData(transcript.count)[, "batchid"] <- NA
-
-  return(list(
-    "rnaseq" = gene.exp,
-    "rnaseq.counts" = gene.count,
-    "isoforms" = transcript.exp,
-    "isoforms.counts" = transcript.count
-  ))
-}
-
-rnaseq.sampleinfo <- read.csv(file.path(download_dir, "GDSC_rnaseq_meta.txt"), sep = "\t")
-rnaseq.sampleinfo <- rnaseq.sampleinfo[which(!rnaseq.sampleinfo$Comment.SUBMITTED_FILE_NAME. == "15552_5.cram"), ]
-rownames(rnaseq.sampleinfo) <- rnaseq.sampleinfo$Comment.EGA_RUN.
-rnaseq.sampleinfo$cellid <- matchToIDTable(ids = rnaseq.sampleinfo$Source.Name, tbl = cell.all, column = "GDSC_rnaseq.cellid", returnColumn = "unique.cellid")
-# rnaseq.sampleinfo <- rnaseq.sampleinfo[,c("cellid","Characteristics.organism.part.","Characteristics.disease.","Characteristics.sex.","Scan.Name","Comment.EGA_RUN.")]
-
-for (r in 1:length(tool_path)) {
-  print(tool_path[r])
-  if (length(grep(pattern = "Kallisto", x = tool_path[r])) > 0) {
-    tool <- sub("(_[^_]+)_.*", "\\1", tool_path[r])
-    # tdir = paste0("gdsc_rnaseq_",gsub(".","_",tolower(tool), fixed = T), "/",  tool, "/", tool, "/")
-    rnatool <- "kallisto"
-  } else {
-    tool <- sub("(_[^_]+)_.*", "\\1", tool_path[r])
-    # tdir = paste0("gdsc_rnaseq_",gsub(".","_",tolower(tool), fixed = T), "/",  tool, "/", tool, "/")
-    rnatool <- "salmon"
-  }
-
-
-  if (length(grep(pattern = "lift37", x = tool_path[r])) > 0) {
-    annot <- file.path(download_dir, "Gencode.v33lift37.annotation.RData")
-  } else if (length(grep(pattern = "v33", x = tool_path[r])) > 0) {
-    annot <- file.path(download_dir, "Gencode.v33.annotation.RData")
-  } else {
-    annot <- file.path(download_dir, "Ensembl.v99.annotation.RData")
-  }
-  print(annot)
-
-
-  rnaseq <- summarizeRnaSeq(
-    dir = file.path(processed_dir, tool, tool_path),
-    features_annotation = annot,
-    samples_annotation = rnaseq.sampleinfo,
-    method = rnatool
-  )
-  rnaseq_results <- c(rnaseq_results, c(
-    rnaseq <- setNames(rnaseq, paste0(tool, ".", names(rnaseq)))
-  ))
-}
 
 message("Compile All GDSC Mutation Data")
 
@@ -884,9 +755,9 @@ curationCell <- curationCell[cells_keep, ]
 curationTissue <- curationTissue[cells_keep, ]
 
 if (standardize) {
-  standardize <- standardizeRawDataConcRange(sens.info = sens.info, sens.raw = sens.raw)
-  sens.info <- standardize$sens.info
-  sens.raw <- standardize$sens.raw
+  standardized <- standardizeRawDataConcRange(sens.info = sens.info, sens.raw = sens.raw)
+  sens.info <- standardized$sens.info
+  sens.raw <- standardized$sens.raw
 } else {
   print("unfiltered PSet")
 }
@@ -907,7 +778,7 @@ GDSC <- PharmacoGx::PharmacoSet(
   datasetType = "sensitivity"
 )
 
-if (length(standardize) > 0) {
+if (standardize) {
   noisy_out <- filterNoisyCurves2(GDSC)
   print("filter done")
   GDSC@sensitivity$profiles[noisy_out$noisy, ] <- NA
@@ -917,16 +788,14 @@ if (length(standardize) > 0) {
 
 GDSC@annotation$version <- 2
 
-year <- 
+year <-
+  saveRDS(
+    GDSC,
+    file = paste0(root_dir, filename),
+    version = 2
+  )
 
-saveRDS(
-  GDSC,
-  file = file.path(root_dir, paste0("GDSC_", year, "(",version, '-', drug_version, ")", ".rds")),
-  version = 2
-)
-
-unlink(file.path(processed_dir, 'GDSC_molecular'), recursive = TRUE)
-unlink(file.path(processed_dir, 'Kallisto_0.46.1'), recursive = TRUE)
+unlink(file.path(processed_dir, "GDSC_molecular"), recursive = TRUE)
 
 # dataset <- paste0("GDSC", gsub("v", "",version))
 
