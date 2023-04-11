@@ -48,7 +48,7 @@ rule get_pset:
         S3.remote(prefix + "processed/drugInfo_" + sens_version + ".RData"),
         S3.remote(prefix + "processed/cellInfo_" + sens_version + ".RData")
     output:
-        prefix + filename
+        S3.remote(prefix + filename)
     shell:
         """
         Rscript scripts/getGDSC.R \
