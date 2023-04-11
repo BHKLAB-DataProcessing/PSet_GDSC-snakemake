@@ -612,9 +612,6 @@ colnames(drug.info)[which(names(drug.info) == "unique.drugid")] <- "drugid"
 
 curationDrug <- curationDrug[rownames(drug.info), ]
 
-message("Making PSet")
-
-
 if (length(cnv_select) > 0) {
   cnv_cells_id <- cl.eset$cellid
 } else {
@@ -670,10 +667,11 @@ if (length(fusion_select) > 0) {
   annotation(FusionEset) <- "Fusion data was not selected for on ORCESTRA"
 }
 
+print("Compiling molecular profiles")
+
 z <- list()
 
 z <- c(z, c(
-  rnaseq_results,
   "rna" = microarray_data,
   "mutation" = MutationEset,
   "mutation_exome" = MutationAll,
@@ -719,6 +717,9 @@ z <- c(z, c(
 }
 
 z <- .converteSetToSE(z)
+z <- c(z, rnaseq_results)
+
+print("Molecular profiles done")
 
 # add cellosaurus disease type to cell-info
 
@@ -762,6 +763,7 @@ if (standardize) {
   print("unfiltered PSet")
 }
 
+message("Making PSet")
 
 GDSC <- PharmacoGx::PharmacoSet(
   molecularProfiles = z,
@@ -778,7 +780,10 @@ GDSC <- PharmacoGx::PharmacoSet(
   datasetType = "sensitivity"
 )
 
+message("Making PSet done")
+
 if (standardize) {
+  message("filtering")
   noisy_out <- filterNoisyCurves2(GDSC)
   print("filter done")
   GDSC@sensitivity$profiles[noisy_out$noisy, ] <- NA
@@ -788,12 +793,11 @@ if (standardize) {
 
 GDSC@annotation$version <- 2
 
-year <-
-  saveRDS(
-    GDSC,
-    file = paste0(root_dir, filename),
-    version = 2
-  )
+saveRDS(
+  GDSC,
+  file = paste0(root_dir, filename),
+  version = 2
+)
 
 unlink(file.path(processed_dir, "GDSC_molecular"), recursive = TRUE)
 
