@@ -672,6 +672,7 @@ print("Compiling molecular profiles")
 z <- list()
 
 z <- c(z, c(
+  rnaseq_results,
   "rna" = microarray_data,
   "mutation" = MutationEset,
   "mutation_exome" = MutationAll,
@@ -717,7 +718,6 @@ z <- c(z, c(
 }
 
 z <- .converteSetToSE(z)
-z <- c(z, rnaseq_results)
 
 print("Molecular profiles done")
 
