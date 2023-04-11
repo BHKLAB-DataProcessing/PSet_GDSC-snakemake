@@ -8,7 +8,7 @@ library(data.table)
 library(reshape2)
 library(CoreGx)
 library(SummarizedExperiment)
-library(biocompute)
+# library(biocompute)
 library(parallel)
 
 options(stringsAsFactors = FALSE)
