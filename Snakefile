@@ -49,6 +49,9 @@ rule get_pset:
         S3.remote(prefix + "processed/cellInfo_" + sens_version + ".RData")
     output:
         S3.remote(prefix + filename)
+    resources:
+        mem_mb = 8000,
+        disk_mb = 10000
     shell:
         """
         Rscript scripts/getGDSC.R \
